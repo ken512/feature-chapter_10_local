@@ -1,14 +1,49 @@
-import { PrismaClient } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { Prisma,PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import { categoriesOptions } from "@/types/categoriesOptions";
+
 const prisma = new PrismaClient();
 export const GET = async () => {
   try {
+    // カテゴリと関連する投稿件数を取得
     const categories = await prisma.category.findMany({
       orderBy: {
         createdAt: "desc",
       },
+      include: {
+        _count: {
+          select: { posts: true }, // postCategoryテーブルのレコード数をカウント
+        },
+      },
     });
-    return NextResponse.json({ status: "OK", categories }, { status: 200 });
+
+    const formattedCategories = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      PostCategory: category._count.posts,
+    }));
+
+    // 選択済みカテゴリを設定（例としてPostCategoryが1以上のものを選択済みとする）
+    const postCategories = formattedCategories
+      .filter((category) => category.PostCategory > 0)
+      .map((category) => ({
+        category: {
+          id: category.id,
+          name: category.name,
+        },
+      }));
+
+    const post = { postCategories };
+
+    return NextResponse.json(
+      {
+        status: "OK",
+        categories: formattedCategories,
+        categoriesOptions,
+        post,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ status: error.message }, { status: 400 });
@@ -21,56 +56,158 @@ export const GET = async () => {
     }
   }
 };
+
 type CreateCategoryRequestBody = {
-  id: number;
-  name: string;
+  categories: {
+    id: number;
+    name: string;
+  }[];
+  postId: number; // 追加した投稿ID
 };
+
+const postCategoryCreation = async (postId: number, categoryId: number) => {
+  // postIdとcategoryIdの存在を確認
+  const postExists = await prisma.post.findUnique({ where: { id: postId } });
+  const categoryExists = await prisma.category.findUnique({ where: { id: categoryId } });
+
+  if (!postExists) {
+    throw new Error(`Post with ID ${postId} does not exist.`);
+  }
+  if (!categoryExists) {
+    throw new Error(`Category with ID ${categoryId} does not exist.`);
+  }
+
+  // postCategoryを作成
+  return await prisma.postCategory.create({
+    data: {
+      postId,
+      categoryId,
+    },
+  });
+};
+
+
+
 export const POST = async (req: Request) => {
   try {
-    const body = await req.json();
-    console.log("Received Body:", body); // デバッグ用ログ
-    const { categories }: { categories: CreateCategoryRequestBody[] } = body;
+    const { categories, postId }: CreateCategoryRequestBody = await req.json();
+
+    // postId が存在することを確認
+    if (!postId) {
+      throw new Error("Post ID is required");
+    }
+
     if (!Array.isArray(categories)) {
       throw new Error("Categories should be an array");
     }
     if (categories.length === 0) {
       throw new Error("Categories are required");
     }
+
     const updatedCategories = await Promise.all(
       categories.map(async (category) => {
-        if (!category.id || !category.name) {
-          throw new Error("ID and Name are required for each category");
-        }
-        const existingCategory = await prisma.category.findUnique({
-          where: { id: category.id },
-        });
-        if (existingCategory) {
-          // 既存のカテゴリがある場合は投稿件数を増加
-          return await prisma.category.update({
-            where: { id: existingCategory.id },
-            data: {
-              categoryPost_count: existingCategory.categoryPost_count + 1,
-            },
+        try {
+          // カテゴリIDと名前の存在確認。IDがあれば処理を続ける。
+          if (!category.id || !category.name) {
+            console.warn(`カテゴリ ${category.id} のIDまたは名前が不足しています`);
+            return null; // IDや名前がない場合はスキップ
+          }
+
+          // 既存のカテゴリを探す
+          let match = await prisma.category.findUnique({
+            where: { id: category.id },
           });
-        } else {
-          throw new Error("Category not found");
+
+          // 既存のカテゴリが見つからない場合、新しく作成
+          if (!match) {
+            match = await prisma.category.create({
+              data: {
+                id: category.id,
+                name: category.name,
+              },
+            });
+            console.log(`新しいカテゴリが作成されました: ${match.name}`);
+          } else {
+            console.log(`既存カテゴリが見つかりました: ${match.name}`);
+          }
+
+          // 投稿とカテゴリを関連付ける
+          await postCategoryCreation(postId, match.id);
+          console.log(`投稿ID: ${postId} がカテゴリID: ${match.id} に関連付けられました`);
+
+          // カテゴリごとの投稿件数をカウント
+          const postCountResult = await prisma.$queryRaw<{ postCount: bigint }[]>(
+            Prisma.sql`SELECT COUNT(*) as postCount FROM PostCategory WHERE categoryId = ${match.id}`
+          );
+
+          console.log(postCountResult); // ここで結果を確認
+
+          const postCount = Number(postCountResult[0]?.postCount || 0);
+          console.log('カテゴリごとの投稿件数:', postCount); // 確認
+
+          // カウントを追加したカテゴリデータを返す
+          return {
+            ...match,
+            postCount,
+          };
+        } catch (error) {
+          console.error(`カテゴリ ${category.id} の処理中にエラーが発生しました:`, error);
+          return null; // エラーが発生した場合はスキップ
         }
       })
     );
-    return NextResponse.json({
-      status: "OK",
-      message: "カテゴリのカウントを増加しました",
-      categories: updatedCategories,
-    });
+
+    // nullを除去して、カテゴリリストを返す
+    const nonNullCategories = updatedCategories.filter(cat => cat !== null);
+
+    // レスポンスを返す
+    return NextResponse.json(
+      {
+        status: 'OK',
+        message: 'カテゴリのカウントを更新しました！',
+        categories: nonNullCategories,
+      },
+      { status: 200 }
+    );
+
   } catch (error) {
-    console.error("Error updating category count:", error); // エラーログを強化
+    console.error("Error managing categories:", error);
     if (error instanceof Error) {
       return NextResponse.json({ status: error.message }, { status: 400 });
-    } else {
-      return NextResponse.json(
-        { status: "Unknown error occurred" },
-        { status: 400 }
-      );
+    }
+  }
+};
+
+export const PUT = async (req: NextRequest) => {
+  try {
+    const { categories }: { categories: { id: string, name: string }[] } = await req.json();
+
+    if (!Array.isArray(categories) || categories.length === 0) {
+      throw new Error("カテゴリデータは必須です");
+    }
+
+    // カテゴリを更新
+    const updatedCategories = await Promise.all(
+      categories.map(async ({ id, name }) => {
+        console.log(`Attempting to update categoryId: ${id} with name: ${name}`);
+        const updatedCategory = await prisma.category.update({
+          where: {
+            id: parseInt(id),
+          },
+          data: {
+            name, // 名前を更新
+          },
+        });
+        console.log(`Updated category:`, updatedCategory);
+        return updatedCategory;
+      })
+    );
+
+    return NextResponse.json({ status: "OK", updatedCategories }, { status: 200 });
+  } catch (error) {
+    console.error("Error updating categories:", error);
+    if (error instanceof Error) {
+      return NextResponse.json({ status: error.message }, { status: 400 });
     }
   }
 };

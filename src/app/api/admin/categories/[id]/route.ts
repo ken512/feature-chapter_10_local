@@ -1,28 +1,66 @@
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-
-type UpdateCategoryRequestBody = {
-  name: string
-}
+import { categoriesOptions } from "@/types/categoriesOptions";
 
 const prisma = new PrismaClient();
 
-export const GET = async(req: NextRequest, {params}: {params: {id: string}}) => {
-  const {id} = params;
-
+export const GET = async () => {
   try {
-    const category = await prisma.category.findUnique({
-      where: {
-        id: parseInt(id),
+    const categories = await prisma.category.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        _count: {
+          select: { posts: true },
+        },
       },
     });
 
-    return NextResponse.json({status: 'OK', category}, {status: 200});
+    const formattedCategories = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      PostCategory: category._count.posts,
+    }));
+
+    // 選択済みカテゴリを設定（例としてPostCategoryが1以上のものを選択済みとする）
+    const postCategories = formattedCategories
+      .filter((category) => category.PostCategory > 0)
+      .map((category) => ({
+        category: {
+          id: category.id,
+          name: category.name,
+        },
+      }));
+
+    const post = { postCategories };
+
+    return NextResponse.json(
+      {
+        status: "OK",
+        categories: formattedCategories,
+        categoriesOptions,
+        post,
+      },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error('Error fetching category:', error);
-    if (error instanceof Error)
-      return NextResponse.json({status: error.message}, {status: 400});
+    if (error instanceof Error) {
+      return NextResponse.json({ status: error.message }, { status: 400 });
+    } else {
+      console.error("Unknown error:", error);
+      return NextResponse.json(
+        { status: "Unknown error occurred" },
+        { status: 400 }
+      );
+    }
   }
+};
+
+
+type UpdateCategoryRequestBody = {
+  categories: { id: number; }[];
+  name: string;
 }
 
 export const PUT = async(req: NextRequest, {params}: {params: {id: string}}) => {

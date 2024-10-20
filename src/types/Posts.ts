@@ -1,13 +1,13 @@
 import { Category } from "@/types/Category"
-
-
 export type Post = {
   id: number
   title: string
   content: string
   createdAt: string
-  postCategories: {category: Category}[]
+  postCategories: {category: Category}[];
   thumbnailUrl: string
+  
+
 }
 
 

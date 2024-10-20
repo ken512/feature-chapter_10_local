@@ -4,5 +4,6 @@ export type Category = {
   name: string,
   createdAt: string,
   updateAt: string,
-  categoryPost_count?: number;
+  category: Category
+  PostCategory?: number;
 }

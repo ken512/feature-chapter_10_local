@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { categoriesOptions } from "@/types/categoriesOptions";
 
 const prisma = new PrismaClient()
 
@@ -12,7 +13,7 @@ export const GET = async (
 
   try {
 
-    const post = await prisma.post.findUnique({
+    const post = await prisma.post.findMany({
       where: {
         id: parseInt(id),
       },
@@ -31,7 +32,7 @@ export const GET = async (
       },
     })
 
-    return NextResponse.json({ status: 'OK', post: post }, { status: 200 })
+    return NextResponse.json({ status: 'OK', post: post, categoriesOptions }, { status: 200 })
   } catch (error) {
     if (error instanceof Error)
       return NextResponse.json({ status: error.message }, { status: 400 })

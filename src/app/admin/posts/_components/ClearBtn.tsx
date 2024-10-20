@@ -12,15 +12,23 @@ type Props = {
 };
 
 export const ClearBtn: React.FC<Props> = ({
-  ClickClear
+  ClickClear,
+  title,
+  content,
+  thumbnailUrl,
+  categories,
 }) => {
   return (
     <div className="py-2 px-5">
       <button
         onClick={() => {
+          title;
+          content;
+          thumbnailUrl;
+          categories;
           ClickClear();
         }}
-        className={`mx-4 px-4 py-1 rounded bg-gray-200 font-bold text-1xl hover:white-black md:text-2xl ${styles.button}`}
+        className={`mx-4 px-4 py-1 rounded bg-gray-200 font-bold text-1xl hover:white-black ${styles.button}`}
       >
         クリア
       </button>

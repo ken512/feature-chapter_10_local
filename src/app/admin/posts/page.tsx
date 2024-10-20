@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Post } from "@/types/Posts";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/app/_component/Header";
-import { BTN } from "@/app/_component/BTN";
-import { DeleteBtn } from "@/app/admin/posts/_components/DeleteBtn";
+import { BTN } from "@/app/_component/Button";
+import { DeleteBtn } from "@/app/admin/posts/_components/DeleteButton";
 import { CheckBox } from "@/app/admin/posts/_components/CheckBox";
 import { InlineDialog } from "@/app/admin/posts/_components/InlineDialog";
 import "@/app/globals.css";
@@ -95,9 +95,9 @@ const ArticleListAdmin: React.FC = () => {
     <div className="sm:w-[430px] md:w-[1024px] md:text-3xl">
       <Header />
       <div className="flex items-center justify-between py-6 px-7 h-15">
-        <h1 className="py-3 text-3xl font-bold sm:text-2xl md:text-4xl">記事一覧</h1>
+        <h1 className="py-3 text-4xl font-bold sm:text-2xl md:text-4xl">記事一覧</h1>
         <InlineDialog
-          visible={showDeleteConfirm}
+          isOpen={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           onConfirm={confirmBulkDelete}
         />
@@ -107,6 +107,9 @@ const ArticleListAdmin: React.FC = () => {
           <CheckBox
             checked={selectAll}
             onChange={handleSelectAllChange}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
           />
           <span>全選択 / 全解除</span>
         </div>
@@ -119,6 +122,9 @@ const ArticleListAdmin: React.FC = () => {
                 checked={checkedValues.has(post.id)}
                 onChange={(e) => {
                   handleCheckBoxChange(post.id, e.target.checked);
+                }}
+                onClick={(event) => {
+                  event.stopPropagation();
                 }}
               />
               <div>{post.title}</div>

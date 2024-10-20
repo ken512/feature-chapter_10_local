@@ -3,8 +3,8 @@ import { Post } from "@/types/Posts";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "./_component/Header";
-import { CategoriesOptions } from "@/types/CategoriesOptions";
-import "./globals.css";
+import { categoriesOptions } from "@/types/categoriesOptions"; 
+import  "./globals.css";
 
 const PostsList: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -64,7 +64,7 @@ const PostsList: React.FC = () => {
                         className="m-[6px] p-[6px] text-[13px] border border-solid border-blue-600 
                         rounded text-blue-600 sm:text-[9px] sm:m-[3px] sm:p-[3px] md:text-2xl"
                       >
-                        {CategoriesOptions.find(
+                        {categoriesOptions.find(
                           (option) => option.value === pc.category.id
                         )?.name || pc.category.name}
                       </span>

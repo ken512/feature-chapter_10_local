@@ -2,9 +2,9 @@
 import React, { ChangeEvent, MouseEvent } from "react";
 
 type CheckBoxProps = {
-  checked?: boolean;
-  onChange?(event: React.ChangeEvent<HTMLInputElement>): void;
-  onClick?(event: MouseEvent): void;
+  checked: boolean;
+  onChange(event: React.ChangeEvent<HTMLInputElement>): void;
+  onClick(event: MouseEvent): void;
 };
 
 export const CheckBox: React.FC<CheckBoxProps> = ({
@@ -13,7 +13,6 @@ export const CheckBox: React.FC<CheckBoxProps> = ({
   onClick = () => {},
 }) => {
   return (
-    <div>
       <input
         type="checkbox"
         checked={checked}
@@ -24,6 +23,5 @@ export const CheckBox: React.FC<CheckBoxProps> = ({
         }}
         className="scale-150"
       />
-    </div>
   );
 };

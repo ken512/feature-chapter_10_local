@@ -10,8 +10,8 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <div className="no-underline">
-      <header className="bg-neutral-800 flex justify-between items-center py-6 px-10 h-15
+
+      <header className="no-underline bg-neutral-800 flex justify-between items-center py-6 px-10 h-15
         text-lg sm:w-[428px] sm:text-xs sm:m-1 sm:py-2 md:max-w-[1024px] md:text-lg">
         <Link href="/" className="font-bold text-white hover:text-gray-400">
           Next.js Sample Blog
@@ -49,7 +49,7 @@ export const Header: React.FC = () => {
                 >
                   <Link
                     href="/admin/posts/new"
-                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-400 hover:text-gray-900 md:text-xl"
+                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300 hover:text-gray-900 md:text-xl"
                     role="menuitem"
                   >
                     <i className="bi bi-pencil-square px-1 text-lg sm:text-sm"></i>
@@ -57,7 +57,7 @@ export const Header: React.FC = () => {
                   </Link>
                   <Link
                     href="/admin/posts"
-                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-400 hover:text-gray-900 md:text-xl"
+                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300 hover:text-gray-900 md:text-xl"
                     role="menuitem"
                   >
                     <i className="bi bi-file-earmark px-1 text-lg sm:text-sm"></i>
@@ -65,7 +65,7 @@ export const Header: React.FC = () => {
                   </Link>
                   <Link
                     href="/admin/categories/new"
-                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-400 hover:text-gray-900 md:text-xl"
+                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300 hover:text-gray-900 md:text-xl"
                     role="menuitem"
                   >
                     <i className="bi bi-tag-fill px-1 text-lg sm:text-sm"></i>
@@ -73,12 +73,26 @@ export const Header: React.FC = () => {
                   </Link>
                   <Link
                     href="/admin/categories"
-                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-400 hover:text-gray-900 md:text-xl"
+                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300 hover:text-gray-900 md:text-xl"
                     role="menuitem"
                   >
                     <i className="bi bi-tags-fill px-1 text-lg sm:text-sm"></i>
                     カテゴリ一覧(編集・削除)
                   </Link>
+                  
+                    <Link
+                    href=""
+                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300 hover:text-gray-900 md:text-xl"
+                    >
+                      <i className="bi bi-door-open-fill sm:text-sm"></i>
+                    ログイン
+                    </Link>
+                    <Link
+                    href=""
+                    className="block px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300 hover:text-gray-900 md:text-xl">
+                      <i className="bi bi-door-closed-fill sm:text-sm"></i>
+                    ログアウト
+                    </Link>
                 </div>
               </div>
             )}
@@ -93,6 +107,5 @@ export const Header: React.FC = () => {
           </div>
         </div>
       </header>
-    </div>
   );
 };

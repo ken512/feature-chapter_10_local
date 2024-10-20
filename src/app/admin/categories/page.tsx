@@ -2,32 +2,34 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Header } from "@/app/_component/Header";
-import { CategoriesCreateBtn } from "@/app/admin/posts/_components/CategoriesCreateBtn";
+import { CategoriesCreateBtn } from "@/app/admin/posts/_components/CategoriesCreateButton";
 import { CheckBox } from "@/app/admin/posts/_components/CheckBox";
-import { DeleteBtn } from "@/app/admin/posts/_components/DeleteBtn";
+import { DeleteBtn } from "@/app/admin/posts/_components/DeleteButton";
 import { InlineDialog } from "@/app/admin/posts/_components/InlineDialog";
 import { CategoryOption } from "@/types/CategoryOption";
 import "@/app/globals.css";
+
 const CategoryList: React.FC = () => {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [checkedValues, setCheckedValues] = useState<Set<number>>(new Set());
-  const [selectAll, setSelectAll] = useState(false); // 全選択の状態を管理
+  const [selectAll, setSelectAll] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/admin/categories");
-        if (!response.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-        const data = await response.json();
-        console.log("Fetched Categories:", data.categories);
-        setCategories(data.categories);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/admin/categories");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
       }
-    };
+      const data = await response.json();
+      console.log("Fetched Categories:", data.categories);
+      setCategories(data.categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchCategories();
   }, []); // 依存配列が空
 
@@ -42,9 +44,7 @@ const CategoryList: React.FC = () => {
     if (response.ok) {
       console.log("カテゴリーが削除されました！");
       setShowDeleteConfirm(false);
-      setCategories((prevCategories) =>
-        prevCategories.filter((category) => category.id !== categoryId)
-      );
+      await fetchCategories(); // APIを再取得して最新のデータをセット
       setCheckedValues((prev) => {
         const newCheckedValues = new Set(prev);
         newCheckedValues.delete(categoryId);
@@ -99,7 +99,7 @@ const CategoryList: React.FC = () => {
       <div className="flex items-center justify-between py-6 px-7 h-15 ">
         <h1 className="py-3 text-3xl font-bold md:text-5xl">カテゴリ一覧</h1>
         <InlineDialog
-          visible={showDeleteConfirm}
+          isOpen={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           onConfirm={confirmBulkDelete}
         />
@@ -107,7 +107,13 @@ const CategoryList: React.FC = () => {
       <div className="md:text-2xl">
         {/* 全選択・全解除ボタン */}
         <div className="mb-4 mx-24 sm:mx-4 ">
-          <CheckBox checked={selectAll} onChange={handleSelectAllChange} />
+          <CheckBox
+            checked={selectAll}
+            onChange={handleSelectAllChange}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          />
           <span>全選択 / 全解除</span>
         </div>
         {/* カテゴリリスト */}
@@ -120,11 +126,16 @@ const CategoryList: React.FC = () => {
                   onChange={(e) => {
                     handleCheckBoxChange(category.id, e.target.checked);
                   }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
                 />
                 <span className="font-bold mx-10 flex items-center justify-between sm:mx-0">
-                  <span className="text-lg text-gray-700 md:text-2xl">{category.name}</span>
+                  <span className="text-lg text-gray-700 md:text-2xl">
+                    {category.name}
+                  </span>
                   <span className="text-gray-400">
-                    ({category.categoryPost_count}件の投稿)
+                    ({category.PostCategory}件の投稿)
                   </span>
                 </span>
               </div>

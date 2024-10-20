@@ -3,8 +3,8 @@ import React, { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/app/_component/Header";
 import { CategoryOption } from "@/types/CategoryOption";
-import { CreateBtn } from "@/app/admin/posts/_components/CreateBtn";
-import { CategoriesClearBtn } from "../../posts/_components/CategoriesClearBtn";
+import { CreateBtn } from "@/app/admin/posts/_components/CreateButton";
+import { CategoriesClearBtn } from "../../posts/_components/CategoriesClearButton";
 import { CreateDialog } from "@/app/admin/posts/_components/CreateDialog";
 import { CategoriesForm } from "@/app/admin/posts/_components/CategoriesForm";
 import { ErrorsType } from "@/types/ErrorType";
@@ -30,10 +30,12 @@ const CategoriesPost: React.FC = () => {
         const validCategories = data.categories.map(
           (category: CategoryOption) => ({
             ...category,
-            post_count: category.categoryPost_count || 0,
+            post_count: category.PostCategory || 0,
           })
         );
         setFetchedCategories(validCategories);
+        setFetchedCategories(data.categoriesOptions);
+        console.log("Fetched Data:",data);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -52,72 +54,82 @@ const CategoriesPost: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-    if (isSubmitting) return;
+    if (isSubmitting) return; // 二重送信防止
+    if (!validate()) return; // バリデーション失敗時は処理を中断
     setIsSubmitting(true);
-    
+  
     const validCategories = selectedCategories.filter(
-      (category) => category.value && category.name
+      (category) => category.id && category.name
     );
-
+  
     if (validCategories.length === 0) {
       console.error("有効なカテゴリがありません。");
       setIsSubmitting(false);
       return;
     }
-
+  
+    // バックエンドの期待する形式にデータを整形
     const newCategories = validCategories.map((c: CategoryOption) => ({
-      id: c.value,
-      name: c.name,
+      id: c.id, // バックエンドが期待するID
+      name: c.name, // バックエンドが期待する名前
     }));
-
+  
+    console.log("送信するカテゴリデータ:", newCategories);
+  
+    // postIdを指定（例: ここでは仮に1を指定していますが、実際の投稿IDを使用してください）
+    const postId = 1;
+  
     try {
-      const response = await fetch("/api/admin/categories", {
+      const categoryResponse = await fetch("/api/admin/categories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ categories: newCategories }),
+        body: JSON.stringify({ categories: newCategories, postId }), // postIdを含めて送信
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("カテゴリが作成されました:", result);
-        setShowCreateConfirm(true);
-
-        setFetchedCategories((prevCategories) =>
-          prevCategories.map((category) =>
-            newCategories.some((newCat) => newCat.name === category.name)
-              ? { ...category, categoryPost_count: (category.categoryPost_count || 0) + 1 }
-              : category
-          )
-        );
-      } else {
-        const errorData = await response.json();
-        console.error("カテゴリの作成に失敗しました:", errorData.status);
+  
+      const result = await categoryResponse.json();
+  
+      if (!categoryResponse.ok) {
+        throw new Error(result.status || "カテゴリの作成に失敗しました");
       }
+  
+      console.log("カテゴリが作成されました:", result);
+      setShowCreateConfirm(true);
+  
+      setCategories((prevCategories) =>
+        prevCategories.map((category) => {
+          const matchingNewCategory = newCategories.find((newCat) => newCat.name === category.name);
+          if (matchingNewCategory) {
+            // バックエンドから返ってきたデータを使用して正しく更新する
+            return { ...category, categoryPost_count: (category.PostCategory || 0) + 1 };
+          }
+          return category;
+        })
+      );
+
     } catch (error) {
-      console.error("エラーが発生しました:", error);
+      console.error("カテゴリの作成に失敗しました:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const toggleCategory = (category: CategoryOption) => {
-    console.log("Selected category:", category); // デバッグ
-    if (!category.value || !category.name) {
+    console.log("Selected category:", category); 
+    if (!category.id || !category.name) {
       console.warn("無効なカテゴリが選択されました:", category);
       return;
     }
 
     setSelectedCategories((prevCategories) =>
-      prevCategories.some((c: CategoryOption) => c.value === category.value)
+      prevCategories.some((c: CategoryOption) => c.id === category.id)
         ? prevCategories.filter(
-            (c: CategoryOption) => c.value !== category.value
+            (c: CategoryOption) => c.id !== category.id
           )
         : [...prevCategories, category]
     );
-  };
+    }
 
   const handleCreateConfirm = async () => {
     setShowCreateConfirm(false);
@@ -125,7 +137,7 @@ const CategoriesPost: React.FC = () => {
   };
 
   const handleClear = () => {
-    setCategories([]);
+    // カテゴリの選択状態だけをクリアする
     setSelectedCategories([]);
   };
 
@@ -143,14 +155,15 @@ const CategoriesPost: React.FC = () => {
           errors={errors}
         />
         <div className="flex justify-center">
-          <CreateBtn ClickCreate={handleSubmit} />
+          <CreateBtn clickCreate={handleSubmit} />
           <CategoriesClearBtn
             categories={categories}
-            ClickClear={handleClear}
+            clickClear={handleClear}
           />
         </div>
         <CreateDialog
-          visible={showCreateConfirm}
+          isOpen={showCreateConfirm}
+          onClose={handleCreateConfirm}
           onConfirm={handleCreateConfirm}
         />
       </div>

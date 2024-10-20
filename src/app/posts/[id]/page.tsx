@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Post } from "@/types/Posts";
 import { useParams } from "next/navigation";
 import { Header } from "@/app/_component/Header";
-import { CategoriesOptions } from "@/types/CategoriesOptions";
+import { categoriesOptions } from "@/types/categoriesOptions";
 import "@/app/globals.css";
 
 const ArticleDetails: React.FC = () => {
@@ -76,7 +76,7 @@ const ArticleDetails: React.FC = () => {
                     className="m-[6px] p-[6px] text-[13px] border border-solid border-blue-600 rounded
                     text-blue-600 sm:text-[9px] sm:m-[3px] sm:p-[3px] md:text-2xl md:m-[10px] md:p-[10px]"
                   >
-                    {CategoriesOptions.find(
+                    {categoriesOptions.find(
                       (option) => option.value === pc.category.id
                     )?.name || pc.category.name}
                   </span>
