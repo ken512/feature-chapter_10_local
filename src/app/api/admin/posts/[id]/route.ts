@@ -84,13 +84,13 @@ export const GET = async (
 type UpdatePostRequestBody = {
   title: string;
   content: string;
-  categories: { id: number; name: string}[];
+  categories: { id: number; name: string }[];
   thumbnailUrl: string;
 };
 
 export const PUT = async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string }, categories: { id: string; name: string }[] } 
 ) => {
   const { id } = params;
 
@@ -113,37 +113,37 @@ export const PUT = async (
 
     console.log("Updated post:", post);
 
-    // 既存のカテゴリを削除
-    await prisma.postCategory.deleteMany({
-      where: {
-        postId: parseInt(id),
-      },
-    });
+    //既存のpostCategoryを全て削除
+await prisma.postCategory.deleteMany({
+  where: { postId: post.id },  // この投稿に関連付けられたpostCategoryを削除
+});
 
-    // 新しいカテゴリを関連付け
-    for (const category of categories) {
-      // カテゴリを更新または作成
-      const updatedCategory = await prisma.category.upsert({
-        where: { id: category.id },
-        update: {
-          name: category.name, // カテゴリ名を更新
-        },
-        create: {
-          id: category.id,
-          name: category.name,
-        },
-      });
+// カテゴリを投稿に紐付ける処理
+for (const category of categories) {
+  // カテゴリの存在確認、または新規作成
+  const existingCategory = await prisma.category.findUnique({
+    where: { id: category.id },
+  });
 
-      // カテゴリを投稿に関連付け
-      await prisma.postCategory.create({
-        data: {
-          postId: post.id,
-          categoryId: updatedCategory.id,
-        },
-      });
-    }
+  if (!existingCategory) {
+    throw new Error(`Category with id ${category.id} does not exist.`);
+  }
+}
 
-    return NextResponse.json({ status: "OK", post: post, updatedCategories: categories }, { status: 200 });
+// 新しいpostCategoryを作成して投稿に紐付け
+for (const category of categories) {
+  await prisma.postCategory.create({
+    data: {
+      postId: post.id,
+      categoryId: category.id,
+    },
+  });
+}
+
+    return NextResponse.json(
+      { status: "OK", post: post, updatedCategories: categories },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error updating post:", error);
     if (error instanceof Error)

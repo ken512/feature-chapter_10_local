@@ -91,7 +91,6 @@ const Page: React.FC = () => {
     return; // エラーがある場合は処理を中断
   }
 
-
     const validCategories = selectedCategories.filter(
       (category) => category.id && category.name
     );
@@ -102,16 +101,17 @@ const Page: React.FC = () => {
       return;
     }
 
-    const upDateCategories = validCategories.map((c: CategoryOption) => ({
-      id: c.id,
-      name: c.name,
-    }));
+      // validCategoriesからカテゴリIDのみを抽出
+  const upDateCategories = validCategories.map((category: CategoryOption) => ({
+    id: category.id,  // idをバックエンドに送るために正しく設定
+    name: category.name,
+  }));
 
     const submitPost = {
       title,
       content,
       thumbnailUrl,
-      categories: upDateCategories,
+      categories: upDateCategories,  // カテゴリIDリストを送信
     };
 
     console.log("Submitting post data:", submitPost);
@@ -129,16 +129,7 @@ const Page: React.FC = () => {
     } else {
       console.error("記事の更新に失敗しました");
     }
-    setCategories((prevCategories) =>
-      prevCategories.map((category) =>
-        categories.some((newCat) => newCat.name === category.name)
-          ? {
-              ...category,
-              categoryPost_count: (category.PostCategory || 0) + 1,
-            }
-          : category
-      )
-    );
+    setIsSubmitting(false); // サブミット状態を解除
   };
 
   const handleClear = () => {

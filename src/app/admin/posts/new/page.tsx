@@ -21,7 +21,9 @@ const NewArticle: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<ErrorsType>({});
   const [showCreateConfirm, setShowCreateConfirm] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<CategoryOption[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<
+    CategoryOption[]
+  >([]);
 
   useEffect(() => {
     if (!id) {
@@ -61,41 +63,41 @@ const NewArticle: React.FC = () => {
     };
     fetchData();
   }, [id]);
-  
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return; // 二重送信防止
     setIsSubmitting(true);
 
-       // エラーチェックを行い、エラーがあれば処理を中断
-  const tempErrors: ErrorsType = {};
-  if (!title) tempErrors.title = "タイトルは必須です。";
-  if (!content) tempErrors.content = "コンテンツは必須です。";
-  if (!thumbnailUrl) tempErrors.thumbnailUrl = "サムネイルURLは必須です。";
-  if (selectedCategories.length === 0)
-    tempErrors.categories = "カテゴリは必須です。";
-  setErrors(tempErrors);
+    // エラーチェックを行い、エラーがあれば処理を中断
+    const tempErrors: ErrorsType = {};
+    if (!title) tempErrors.title = "タイトルは必須です。";
+    if (!content) tempErrors.content = "コンテンツは必須です。";
+    if (!thumbnailUrl) tempErrors.thumbnailUrl = "サムネイルURLは必須です。";
+    if (selectedCategories.length === 0)
+      tempErrors.categories = "カテゴリは必須です。";
+    setErrors(tempErrors);
 
-  if (Object.keys(tempErrors).length > 0) {
-    setIsSubmitting(false);
-    return; // エラーがある場合は処理を中断
-  }
-  
+    if (Object.keys(tempErrors).length > 0) {
+      setIsSubmitting(false);
+      return; // エラーがある場合は処理を中断
+    }
+
     const validCategories = selectedCategories.filter(
       (category) => category.id && category.name
     );
-  
+
     if (validCategories.length === 0) {
       console.error("有効なカテゴリがありません。");
       setIsSubmitting(false);
       return;
     }
-  
+
     const newCategories = validCategories.map((c: CategoryOption) => ({
       id: c.id,
       name: c.name,
     }));
-  
+
     console.log("Selected Categories:", newCategories);
     const newArticle = {
       title,
@@ -104,7 +106,7 @@ const NewArticle: React.FC = () => {
       categories: newCategories, // 修正
     };
     console.log("New Article Data:", newArticle);
-  
+
     try {
       const response = await fetch("/api/admin/posts", {
         method: "POST",
@@ -113,10 +115,10 @@ const NewArticle: React.FC = () => {
         },
         body: JSON.stringify(newArticle),
       });
-  
-      if(response.ok) {
+
+      if (response.ok) {
         console.log("記事が作成されました");
-  
+
         try {
           const categoryResponse = await fetch("/api/admin/categories", {
             method: "POST",
@@ -125,15 +127,18 @@ const NewArticle: React.FC = () => {
             },
             body: JSON.stringify({ categories: newCategories }),
           });
-  
+
           const result = await categoryResponse.json();
           console.log("カテゴリが作成されました:", result);
           setShowCreateConfirm(true);
-  
+
           setCategories((prevCategories) =>
             prevCategories.map((category) =>
               newCategories.some((newCat) => newCat.name === category.name)
-                ? { ...category, categoryPost_count: (category.PostCategory || 0) + 1 }
+                ? {
+                    ...category,
+                    categoryPost_count: (category.PostCategory || 0) + 1,
+                  }
                 : category
             )
           );
@@ -151,7 +156,7 @@ const NewArticle: React.FC = () => {
     }
   };
 
-    const toggleCategory = (category: CategoryOption) => {
+  const toggleCategory = (category: CategoryOption) => {
     console.log("Selected category:", category); // デバッグ
     if (!category.id || !category.name) {
       console.warn("無効なカテゴリが選択されました:", category);
@@ -165,8 +170,7 @@ const NewArticle: React.FC = () => {
           )
         : [...prevCategories, category]
     );
-    }
-
+  };
 
   const handleCreateConfirm = () => {
     setShowCreateConfirm(false);
@@ -212,6 +216,6 @@ const NewArticle: React.FC = () => {
       </form>
     </div>
   );
-}
+};
 
 export default NewArticle;

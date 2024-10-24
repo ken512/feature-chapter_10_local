@@ -18,10 +18,9 @@ export const CategoriesForm: React.FC<CategoriesProps> = ({
   selectedCategories = [],
   errors = {},
 }) => {
-
   
   const isSelected = (categories: CategoryOption) => {
-    return selectedCategories.some((selectedCategories) => selectedCategories.value === categories.value);
+    return selectedCategories?.some((selectedCategories) => selectedCategories.value === categories.value);
   };
 
   return (
@@ -29,9 +28,9 @@ export const CategoriesForm: React.FC<CategoriesProps> = ({
       <div className="w-88 py-5 md:text-2xl">
         <Label htmlFor="categories">カテゴリ一覧</Label>
         <div className="overflow-wrap-normal my-4">
-          {categories.map((category) => (
+          {categories.map((category, index) => (
             <button
-              key={category.id}
+            key={`${category.id}-${index}`}  // インデックス値を加えて一意にする
               type="button"
               onClick={() => toggleCategory(category)}
               className={`mx-2 px-4 py-2 sm:mx-1 sm:my-2 md:mx-5 md:my-4 hover:bg-blue-500 rounded ${

@@ -1,5 +1,5 @@
 "use client";
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/app/_component/Header";
 import { DetailsCategoriesForm } from "../../posts/_components/DetailsCategoriesForm";
@@ -23,39 +23,42 @@ const CategoryEdit: React.FC = () => {
       setErrors({ categories: "カテゴリは必須です" });
       return;
     }
-  
-    const categoriesToUpdate = selectedCategories.map(category => ({
+
+    const categoriesToUpdate = selectedCategories.map((category) => ({
       id: category.id,
       name: category.name,
     }));
-  
+
     try {
       const response = await fetch("/api/admin/categories", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ categories: categoriesToUpdate }),
+        body: JSON.stringify({ categories: categoriesToUpdate }), // 選択されたカテゴリを送信
       });
-  
+
       if (response.ok) {
         const responseData = await response.json();
-        const updatedCategories: CategoryOption[] = responseData.updatedCategories;
+        const updatedCategories: CategoryOption[] =
+          responseData.updatedCategories;
+
         console.log("カテゴリが更新されました");
         console.log("Updated Categories:", updatedCategories);
-  
+
         // フロントエンドの状態を更新
         setCategories((prevCategories) => {
-          const updatedIds = updatedCategories.map((updated) => updated.id);
-        
-          // 更新されたカテゴリのみを置き換え、他のカテゴリはそのまま残す
+          // updatedCategories の内容に基づいて prevCategories を更新(カテゴリIDに基づいてカテゴリ名が正しく反映)
           return prevCategories.map((category) => {
-            const foundCategory = updatedCategories.find((updated) => updated.id === category.id);
-            return foundCategory ? foundCategory : category;
+            const foundCategory = updatedCategories.find(
+              (updated) => updated.id === category.id
+            );
+            return foundCategory
+              ? { ...category, name: foundCategory.name }
+              : category;
           });
         });
-        console.log("Selected categories before update:", selectedCategories);
-  
+
         setShowUpdateConfirm(true);
       } else {
         console.error("カテゴリの更新に失敗しました");

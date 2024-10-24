@@ -12,7 +12,7 @@ import "@/app/globals.css";
 
 const CategoriesPost: React.FC = () => {
   const router = useRouter();
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categories] = useState<CategoryOption[]>([]);
   const [fetchedCategories, setFetchedCategories] = useState<CategoryOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<ErrorsType>({});
@@ -59,7 +59,7 @@ const CategoriesPost: React.FC = () => {
     setIsSubmitting(true);
   
     const validCategories = selectedCategories.filter(
-      (category) => category.id && category.name
+      (category) => category.name // 名前だけあればよい
     );
   
     if (validCategories.length === 0) {
@@ -70,14 +70,9 @@ const CategoriesPost: React.FC = () => {
   
     // バックエンドの期待する形式にデータを整形
     const newCategories = validCategories.map((c: CategoryOption) => ({
-      id: c.id, // バックエンドが期待するID
-      name: c.name, // バックエンドが期待する名前
+      id: c.id, // 既存カテゴリならIDを使用
+      name: c.name, // 名前を使用
     }));
-  
-    console.log("送信するカテゴリデータ:", newCategories);
-  
-    // postIdを指定（例: ここでは仮に1を指定していますが、実際の投稿IDを使用してください）
-    const postId = 1;
   
     try {
       const categoryResponse = await fetch("/api/admin/categories", {
@@ -85,7 +80,7 @@ const CategoriesPost: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ categories: newCategories, postId }), // postIdを含めて送信
+        body: JSON.stringify({ categories: newCategories }), // postIdは送らない
       });
   
       const result = await categoryResponse.json();
@@ -95,26 +90,21 @@ const CategoriesPost: React.FC = () => {
       }
   
       console.log("カテゴリが作成されました:", result);
-      setShowCreateConfirm(true);
   
-      setCategories((prevCategories) =>
-        prevCategories.map((category) => {
-          const matchingNewCategory = newCategories.find((newCat) => newCat.name === category.name);
-          if (matchingNewCategory) {
-            // バックエンドから返ってきたデータを使用して正しく更新する
-            return { ...category, categoryPost_count: (category.PostCategory || 0) + 1 };
-          }
-          return category;
-        })
-      );
-
+      // 新しく作成されたカテゴリをセット
+      setFetchedCategories((prevCategories) => [
+        ...prevCategories,
+        ...result.categories,
+      ]);
+  
+      setShowCreateConfirm(true);
     } catch (error) {
       console.error("カテゴリの作成に失敗しました:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   const toggleCategory = (category: CategoryOption) => {
     console.log("Selected category:", category); 
     if (!category.id || !category.name) {

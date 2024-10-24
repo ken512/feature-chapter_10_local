@@ -1,4 +1,4 @@
-import { Prisma,PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { categoriesOptions } from "@/types/categoriesOptions";
 
@@ -58,58 +58,58 @@ export const GET = async () => {
 };
 
 type CreateCategoryRequestBody = {
-  categories: {
+  categoryId: {
     id: number;
     name: string;
   }[];
-  postId: number; // 追加した投稿ID
-};
-
-const postCategoryCreation = async (postId: number, categoryId: number) => {
-  // postIdとcategoryIdの存在を確認
-  const postExists = await prisma.post.findUnique({ where: { id: postId } });
-  const categoryExists = await prisma.category.findUnique({ where: { id: categoryId } });
-
-  if (!postExists) {
-    throw new Error(`Post with ID ${postId} does not exist.`);
-  }
-  if (!categoryExists) {
-    throw new Error(`Category with ID ${categoryId} does not exist.`);
-  }
-
-  // postCategoryを作成
-  return await prisma.postCategory.create({
-    data: {
-      postId,
-      categoryId,
-    },
-  });
+  postId?: number; // 記事が提供されない場合もあるので optional に変更
 };
 
 
 
 export const POST = async (req: Request) => {
-  try {
-    const { categories, postId }: CreateCategoryRequestBody = await req.json();
-
-    // postId が存在することを確認
-    if (!postId) {
-      throw new Error("Post ID is required");
+// 特定の投稿（`postId`）とカテゴリ（`categoryId`）がデータベースに存在するかどうかを確認
+  const postCategoryCreation = async (postId: number, categoryId: number) => {
+    // postIdとcategoryIdの存在を確認
+    const postExists = await prisma.post.findUnique({ where: { id: postId } });
+    const categoryExists = await prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+  
+    if (!postExists) {
+      throw new Error(`Post with ID ${postId} does not exist.`);
     }
+    if (!categoryExists) {
+      throw new Error(`Category with ID ${categoryId} does not exist.`);
+    }
+  
+    // postCategoryを作成
+    return await prisma.postCategory.create({
+      data: {
+        postId,
+        categoryId,
+      },
+    });
+  };
+  
+  try {
+    const { categoryId, postId }: CreateCategoryRequestBody = await req.json();
 
-    if (!Array.isArray(categories)) {
+    if (!Array.isArray(categoryId)) {
       throw new Error("Categories should be an array");
     }
-    if (categories.length === 0) {
+    if (categoryId.length === 0) {
       throw new Error("Categories are required");
     }
 
     const updatedCategories = await Promise.all(
-      categories.map(async (category) => {
+      categoryId.map(async (category) => {
         try {
           // カテゴリIDと名前の存在確認。IDがあれば処理を続ける。
           if (!category.id || !category.name) {
-            console.warn(`カテゴリ ${category.id} のIDまたは名前が不足しています`);
+            console.warn(
+              `カテゴリ ${category.id} のIDまたは名前が不足しています`
+            );
             return null; // IDや名前がない場合はスキップ
           }
 
@@ -131,45 +131,37 @@ export const POST = async (req: Request) => {
             console.log(`既存カテゴリが見つかりました: ${match.name}`);
           }
 
-          // 投稿とカテゴリを関連付ける
-          await postCategoryCreation(postId, match.id);
-          console.log(`投稿ID: ${postId} がカテゴリID: ${match.id} に関連付けられました`);
+          if (postId) {
+            await postCategoryCreation(postId, match.id);
+            console.log(
+              `投稿ID: ${postId} がカテゴリID: ${match.id} に関連付けられました`
+            );
+          }
 
-          // カテゴリごとの投稿件数をカウント
-          const postCountResult = await prisma.$queryRaw<{ postCount: bigint }[]>(
-            Prisma.sql`SELECT COUNT(*) as postCount FROM PostCategory WHERE categoryId = ${match.id}`
-          );
-
-          console.log(postCountResult); // ここで結果を確認
-
-          const postCount = Number(postCountResult[0]?.postCount || 0);
-          console.log('カテゴリごとの投稿件数:', postCount); // 確認
-
-          // カウントを追加したカテゴリデータを返す
-          return {
-            ...match,
-            postCount,
-          };
+          return match;
         } catch (error) {
-          console.error(`カテゴリ ${category.id} の処理中にエラーが発生しました:`, error);
+          console.error(
+            `カテゴリ ${category.id} の処理中にエラーが発生しました:`,
+            error
+          );
           return null; // エラーが発生した場合はスキップ
         }
       })
     );
 
+
     // nullを除去して、カテゴリリストを返す
-    const nonNullCategories = updatedCategories.filter(cat => cat !== null);
+    const nonNullCategories = updatedCategories.filter((cat) => cat !== null);
 
     // レスポンスを返す
     return NextResponse.json(
       {
-        status: 'OK',
-        message: 'カテゴリのカウントを更新しました！',
+        status: "OK",
+        message: "カテゴリのカウントを更新しました！",
         categories: nonNullCategories,
       },
       { status: 200 }
     );
-
   } catch (error) {
     console.error("Error managing categories:", error);
     if (error instanceof Error) {
@@ -180,7 +172,8 @@ export const POST = async (req: Request) => {
 
 export const PUT = async (req: NextRequest) => {
   try {
-    const { categories }: { categories: { id: string, name: string }[] } = await req.json();
+    const { categories }: { categories: { id: string; name: string }[] } =
+      await req.json();
 
     if (!Array.isArray(categories) || categories.length === 0) {
       throw new Error("カテゴリデータは必須です");
@@ -189,7 +182,9 @@ export const PUT = async (req: NextRequest) => {
     // カテゴリを更新
     const updatedCategories = await Promise.all(
       categories.map(async ({ id, name }) => {
-        console.log(`Attempting to update categoryId: ${id} with name: ${name}`);
+        console.log(
+          `Attempting to update categoryId: ${id} with name: ${name}`
+        );
         const updatedCategory = await prisma.category.update({
           where: {
             id: parseInt(id),
@@ -203,7 +198,10 @@ export const PUT = async (req: NextRequest) => {
       })
     );
 
-    return NextResponse.json({ status: "OK", updatedCategories }, { status: 200 });
+    return NextResponse.json(
+      { status: "OK", updatedCategories },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error updating categories:", error);
     if (error instanceof Error) {

@@ -3,6 +3,7 @@ export type CategoryOption = {
   value: number;
   name: string;
   PostCategory: number; 
+  post_count: number;
 }
 
 
