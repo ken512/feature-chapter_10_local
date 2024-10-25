@@ -46,18 +46,20 @@ const CategoryEdit: React.FC = () => {
         console.log("カテゴリが更新されました");
         console.log("Updated Categories:", updatedCategories);
 
-        // フロントエンドの状態を更新
-        setCategories((prevCategories) => {
-          // updatedCategories の内容に基づいて prevCategories を更新(カテゴリIDに基づいてカテゴリ名が正しく反映)
-          return prevCategories.map((category) => {
-            const foundCategory = updatedCategories.find(
-              (updated) => updated.id === category.id
-            );
-            return foundCategory
-              ? { ...category, name: foundCategory.name }
-              : category;
-          });
-        });
+       // フロントエンドの状態を更新
+setCategories((prevCategories) => {
+  // updatedCategories を Map にして ID で効率よく参照
+  const updatedCategoriesMap = new Map(updatedCategories.map(cat => [cat.id, cat]));
+
+  return prevCategories.map((category) => {
+    // 更新されたカテゴリがあればそれを適用、なければ元のカテゴリをそのまま返す
+    const updatedCategory = updatedCategoriesMap.get(category.id);
+    return updatedCategory 
+      ? { ...category, name: updatedCategory.name }  // updatedCategoryが存在する場合のみnameを更新
+      : category;  // updatedCategoryがない場合は元のcategoryをそのまま返す
+  });
+});
+
 
         setShowUpdateConfirm(true);
       } else {

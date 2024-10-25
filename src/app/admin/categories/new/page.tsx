@@ -80,7 +80,7 @@ const CategoriesPost: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ categories: newCategories }), // postIdは送らない
+        body: JSON.stringify({ categories: newCategories, postId: null  }), // postIdは送らない
       });
   
       const result = await categoryResponse.json();
@@ -105,6 +105,7 @@ const CategoriesPost: React.FC = () => {
     }
   };
   
+
   const toggleCategory = (category: CategoryOption) => {
     console.log("Selected category:", category); 
     if (!category.id || !category.name) {

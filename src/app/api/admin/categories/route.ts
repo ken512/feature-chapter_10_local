@@ -58,7 +58,7 @@ export const GET = async () => {
 };
 
 type CreateCategoryRequestBody = {
-  categoryId: {
+  categories: {
     id: number;
     name: string;
   }[];
@@ -93,17 +93,17 @@ export const POST = async (req: Request) => {
   };
   
   try {
-    const { categoryId, postId }: CreateCategoryRequestBody = await req.json();
+    const { categories, postId }: CreateCategoryRequestBody = await req.json();
 
-    if (!Array.isArray(categoryId)) {
+    if (!Array.isArray(categories)) {
       throw new Error("Categories should be an array");
     }
-    if (categoryId.length === 0) {
+    if (categories.length === 0) {
       throw new Error("Categories are required");
     }
 
     const updatedCategories = await Promise.all(
-      categoryId.map(async (category) => {
+      categories.map(async (category) => {
         try {
           // カテゴリIDと名前の存在確認。IDがあれば処理を続ける。
           if (!category.id || !category.name) {
@@ -157,7 +157,7 @@ export const POST = async (req: Request) => {
     return NextResponse.json(
       {
         status: "OK",
-        message: "作成しました！",
+        message: "カテゴリのカウントを更新しました！",
         categories: nonNullCategories,
       },
       { status: 200 }
