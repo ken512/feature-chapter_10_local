@@ -157,7 +157,7 @@ export const POST = async (req: Request) => {
     return NextResponse.json(
       {
         status: "OK",
-        message: "カテゴリのカウントを更新しました！",
+        message: "作成しました！",
         categories: nonNullCategories,
       },
       { status: 200 }
