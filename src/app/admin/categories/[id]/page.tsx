@@ -95,7 +95,7 @@ const CategoryEdit: React.FC = () => {
       </div>
       <div className="p-5">
         <DetailsCategoriesForm
-          name={name} // 特定カテゴリIDのカテゴリ名を表示
+          name={name} 
           setName={setName}
           onSubmit={handleUpdate} // 更新処理を渡す
           errors={errors}
