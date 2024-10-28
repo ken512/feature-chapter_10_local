@@ -4,7 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/app/_component/Header";
 import { DetailsCategoriesForm } from "../../posts/_components/DetailsCategoriesForm";
 import { UpdateDelete } from "../../posts/_components/UpdateDeleteButton"; 
-import { CategoryOption } from "@/types/CategoryOption";
 import { UpDateDialog } from "../../posts/_components/UpDateDialog";
 import { ErrorsType } from "@/types/ErrorType";
 import "@/app/globals.css";
@@ -14,7 +13,6 @@ const CategoryEdit: React.FC = () => {
   const router = useRouter();
   const [name, setName] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [updatedCategories, setUpdatedCategories] = useState<CategoryOption[]>([]);
   const [errors, setErrors] = useState<ErrorsType>({});
 
   const validate = () => {
@@ -40,8 +38,6 @@ const CategoryEdit: React.FC = () => {
       });
 
       if (response.ok) {
-        const responseData = await response.json();
-        setUpdatedCategories(responseData.updatedCategories || []);// 更新されたカテゴリ情報を設定
         setIsDialogOpen(true); // ダイアログを表示
       } else {
         console.error("カテゴリの更新に失敗しました");
@@ -68,8 +64,9 @@ const CategoryEdit: React.FC = () => {
     }
   };
 
+  // 特定のカテゴリIDのデータを取得して表示
   useEffect(() => {
-    const fetcher = async () => {
+    const fetchCategory = async () => {
       try {
         const res = await fetch(`/api/admin/categories/${id}`);
         const data = await res.json();
@@ -82,7 +79,7 @@ const CategoryEdit: React.FC = () => {
         console.error("カテゴリの取得中にエラーが発生しました:", error);
       }
     };
-    fetcher();
+    fetchCategory();
   }, [id]);
 
   const closeDialog = () => {
@@ -98,7 +95,7 @@ const CategoryEdit: React.FC = () => {
       </div>
       <div className="p-5">
         <DetailsCategoriesForm
-          name={updatedCategories[0]?.name || name} // updatedCategoriesの内容を表示
+          name={name} // 特定カテゴリIDのカテゴリ名を表示
           setName={setName}
           onSubmit={handleUpdate} // 更新処理を渡す
           errors={errors}
