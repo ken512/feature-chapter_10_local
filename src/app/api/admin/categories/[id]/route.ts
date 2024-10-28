@@ -23,6 +23,9 @@ export const GET = async () => {
       PostCategory: category._count.posts,
     }));
 
+    // 最初のカテゴリを単一オブジェクトとして追加
+    const category = formattedCategories.length > 0 ? formattedCategories[0] : null;
+
     // 選択済みカテゴリを設定（例としてPostCategoryが1以上のものを選択済みとする）
     const postCategories = formattedCategories
       .filter((category) => category.PostCategory > 0)
@@ -41,6 +44,7 @@ export const GET = async () => {
         categories: formattedCategories,
         categoriesOptions,
         post,
+        category,
       },
       { status: 200 }
     );
@@ -57,16 +61,10 @@ export const GET = async () => {
   }
 };
 
-
-type UpdateCategoryRequestBody = {
-  categories: { id: number; }[];
-  name: string;
-}
-
-export const PUT = async(req: NextRequest, {params}: {params: {id: string}}) => {
+export const PUT = async(req: NextRequest, {params}: {params: {id: string}},) => {
   const {id} = params;
 
-  const {name}: UpdateCategoryRequestBody = await req.json();
+  const {name} = await req.json();
 
   try {
     const category = await prisma.category.update({
@@ -87,11 +85,8 @@ export const PUT = async(req: NextRequest, {params}: {params: {id: string}}) => 
 }
 
 export const DELETE = async(req: NextRequest, {params}: {params: {id: string}}) => {
-  const {id} = params;
 
-  if (!id || isNaN(parseInt(id))) {
-    return NextResponse.json({status: 'Invalid ID'}, {status: 400});
-  }
+  const {id} = params;
 
   try {
     // カテゴリが存在するか確認

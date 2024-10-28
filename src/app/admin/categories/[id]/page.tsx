@@ -1,98 +1,93 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/app/_component/Header";
 import { DetailsCategoriesForm } from "../../posts/_components/DetailsCategoriesForm";
+import { UpdateDelete } from "../../posts/_components/UpdateDeleteButton"; 
 import { CategoryOption } from "@/types/CategoryOption";
-import { UpdateClear } from "../../posts/_components/UpdateClearButton";
-import { UpDateDialog } from "@/app/admin/posts/_components/UpDateDialog";
+import { UpDateDialog } from "../../posts/_components/UpDateDialog";
 import { ErrorsType } from "@/types/ErrorType";
 import "@/app/globals.css";
 
 const CategoryEdit: React.FC = () => {
+  const { id } = useParams();
   const router = useRouter();
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<
-    CategoryOption[]
-  >([]);
+  const [name, setName] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [updatedCategories, setUpdatedCategories] = useState<CategoryOption[]>([]);
   const [errors, setErrors] = useState<ErrorsType>({});
-  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
 
-  const handleUpdate = async () => {
-    if (selectedCategories.length === 0) {
-      setErrors({ categories: "カテゴリは必須です" });
-      return;
+  const validate = () => {
+    const tempErrors: ErrorsType = {};
+    if (name.trim().length === 0) {
+      tempErrors.categories = "カテゴリは必須です。";
     }
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
 
-    const categoriesToUpdate = selectedCategories.map((category) => ({
-      id: category.id,
-      name: category.name,
-    }));
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
 
     try {
-      const response = await fetch("/api/admin/categories", {
+      const response = await fetch(`/api/admin/categories/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ categories: categoriesToUpdate }), // 選択されたカテゴリを送信
+        body: JSON.stringify({ name }),
       });
 
       if (response.ok) {
         const responseData = await response.json();
-        const updatedCategories: CategoryOption[] =
-          responseData.updatedCategories;
-
-        console.log("カテゴリが更新されました");
-        console.log("Updated Categories:", updatedCategories);
-
-       // フロントエンドの状態を更新
-setCategories((prevCategories) => {
-  // updatedCategories を Map にして ID で効率よく参照
-  const updatedCategoriesMap = new Map(updatedCategories.map(cat => [cat.id, cat]));
-
-  return prevCategories.map((category) => {
-    // 更新されたカテゴリがあればそれを適用、なければ元のカテゴリをそのまま返す
-    const updatedCategory = updatedCategoriesMap.get(category.id);
-    return updatedCategory 
-      ? { ...category, name: updatedCategory.name }  // updatedCategoryが存在する場合のみnameを更新
-      : category;  // updatedCategoryがない場合は元のcategoryをそのまま返す
-  });
-});
-
-
-        setShowUpdateConfirm(true);
+        setUpdatedCategories(responseData.updatedCategories || []);// 更新されたカテゴリ情報を設定
+        setIsDialogOpen(true); // ダイアログを表示
       } else {
         console.error("カテゴリの更新に失敗しました");
+        setErrors({ categories: "カテゴリの更新に失敗しました" });
       }
     } catch (error) {
       console.error("エラーが発生しました:", error);
+      setErrors({ categories: "エラーが発生しました" });
     }
   };
 
-  const handleClear = () => {
-    setSelectedCategories([]);
+  const handleDelete = async () => {
+    if (!confirm("カテゴリを削除しますか？")) return;
+
+    try {
+      await fetch(`/api/admin/categories/${id}`, {
+        method: 'DELETE',
+      });
+
+      setIsDialogOpen(false);
+      router.push("/admin/categories");
+    } catch (error) {
+      console.error("削除エラーが発生しました:", error);
+    }
   };
 
-  const handleUpdateConfirm = () => {
-    setShowUpdateConfirm(false);
+  useEffect(() => {
+    const fetcher = async () => {
+      try {
+        const res = await fetch(`/api/admin/categories/${id}`);
+        const data = await res.json();
+        if (data.category) {
+          setName(data.category.name);
+        } else {
+          console.error("カテゴリデータが見つかりませんでした");
+        }
+      } catch (error) {
+        console.error("カテゴリの取得中にエラーが発生しました:", error);
+      }
+    };
+    fetcher();
+  }, [id]);
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
     router.push("/admin/categories");
-  };
-
-  const toggleCategory = (category: CategoryOption) => {
-    console.log("Selected category:", category); // デバッグ
-    if (!category.value || !category.name) {
-      console.warn("無効なカテゴリが選択されました:", category);
-      return;
-    }
-
-    setSelectedCategories((prevCategories) =>
-      prevCategories.some((c: CategoryOption) => c.value === category.value)
-        ? prevCategories.filter(
-            (c: CategoryOption) => c.value !== category.value
-          )
-        : [...prevCategories, category]
-    );
   };
 
   return (
@@ -103,21 +98,26 @@ setCategories((prevCategories) => {
       </div>
       <div className="p-5">
         <DetailsCategoriesForm
-          categories={categories}
-          toggleCategory={toggleCategory}
-          setCategories={setCategories}
-          setSelectedCategories={setSelectedCategories}
-          selectedCategories={selectedCategories}
+          name={updatedCategories[0]?.name || name} // updatedCategoriesの内容を表示
+          setName={setName}
+          onSubmit={handleUpdate} // 更新処理を渡す
           errors={errors}
         />
-        <UpdateClear ClickUpdate={handleUpdate} ClickClear={handleClear} />
-        <UpDateDialog
-          isOpen={showUpdateConfirm}
-          onClose={handleUpdateConfirm}
-          onConfirm={handleUpdateConfirm}
-        />
       </div>
+      <UpdateDelete
+        ClickUpdate={handleUpdate}
+        ClickDelete={handleDelete}
+        isDeleteDisabled={!name} // 名前がない場合削除ボタンを無効化
+      />
+
+      {/* 更新完了のダイアログ */}
+      <UpDateDialog
+        isOpen={isDialogOpen}
+        onClose={closeDialog}
+        onConfirm={closeDialog} // OKボタンが押されたときにダイアログを閉じる
+      />
     </div>
   );
 };
+
 export default CategoryEdit;
