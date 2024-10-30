@@ -12,7 +12,7 @@ type ArticleFormProps = {
   thumbnailUrl: string;
   setThumbnailUrl: (url: string) => void;
   categories: CategoryOption[];
-  setCategories: (categories: CategoryOption[]) => void; 
+  setCategories: (categories: CategoryOption[]) => void;
   selectedCategories: CategoryOption[];
   toggleCategory: (category: CategoryOption) => void;
   errors?: ErrorsType;
@@ -32,30 +32,29 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
   errors = {},
 }) => {
 
+  // カテゴリを取得して設定
   useEffect(() => {
-    const fetchCategories = async() => {
-    
-    try {
-      const response = await fetch("/api/admin/categories");
-      if(!response.ok) {
-        throw new Error("Failed to fetch categories");
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/admin/categories");
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+        const data = await response.json();
+        setCategories(data.categories);  // カテゴリを設定
+      } catch (error) {
+        console.error("Error fetching categories:", error);
       }
-      const data = await response.json();
-      // APIからのレスポンスが配列であることを確認してから設定する
-      if (Array.isArray(data.categories)) {
-        setCategories(data.categoriesOptions);
-      } else {
-        throw new Error("Invalid data format");
-      }
-    } catch (error) {
-      console.log("Error fetching categories:", error);
-    }
-  };
-  fetchCategories();
-}, [setCategories]);
+    };
 
+    fetchCategories();
+  }, [setCategories]);
+
+// ArticleFormコンポーネント内
 const isSelected = (category: CategoryOption) => {
-  return selectedCategories.some((selectedCategory) => selectedCategory.value === category.value);
+  return selectedCategories.some(
+    (selectedCategory) => selectedCategory.id === category.id
+  );
 };
 
   return (
@@ -97,22 +96,28 @@ const isSelected = (category: CategoryOption) => {
           <p className="text-red-500">{errors.thumbnailUrl}</p>
         )}
       </div>
-      
+
       <div className="w-full py-5 sm:w-full md:text-2xl">
         <Label htmlFor="categories">カテゴリ</Label>
         <div className="overflow-wrap-normal my-4">
-          {categories.map((category) => (
-            <button
-            key={category.id}
-            type="button"
-            onClick={() => toggleCategory(category)}
-            className={`mx-2 px-4 py-2 sm:mx-1 sm:my-2 md:mx-5 md:my-4 hover:bg-blue-500 rounded ${
-              isSelected(category) ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          >
-              {category.name}
-            </button>
-          ))}
+          {categories && categories.length > 0 ? (
+            categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => toggleCategory(category)}
+                className={`mx-2 px-4 py-2 sm:mx-1 sm:my-2 md:mx-5 md:my-4 hover:bg-blue-500 rounded ${
+                  isSelected(category)
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                {category.name}
+              </button>
+            ))
+          ) : (
+            <p className="text-gray-500">カテゴリがありません。</p>
+          )}
         </div>
         {errors.categories && (
           <p className="text-red-500">{errors.categories}</p>

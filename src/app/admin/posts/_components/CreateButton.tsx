@@ -2,7 +2,7 @@
 import React from "react";
 
 type CreateBtnProps = {
-  clickCreate: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  clickCreate: (e: React.FormEvent) => void;
 };
 
 export const CreateBtn: React.FC<CreateBtnProps> = ({ clickCreate }) => {

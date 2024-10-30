@@ -134,9 +134,6 @@ const CategoryList: React.FC = () => {
                   <span className="text-lg text-gray-700 md:text-2xl">
                     {category.name}
                   </span>
-                  <span className="text-gray-400">
-                    ({category.PostCategory}件の投稿)
-                  </span>
                 </span>
               </div>
             </Link>

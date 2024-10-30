@@ -39,28 +39,26 @@ const Page: React.FC = () => {
             setTitle(post.title);
             setContent(post.content);
             setThumbnailUrl(post.thumbnailUrl);
-
-            const formattedCategories = post.categoriesOptions.map(
+  
+            const formattedCategories = data.categories.map(
               (category: CategoryOption) => ({
                 id: category.id,
                 value: category.id,
                 label: category.name,
                 name: category.name,
-                post_count: category.PostCategory || 0,
               })
             );
             setCategories(formattedCategories);
 
-            // 初期選択状態にする
-            const selected = post.postCategories.map(
-              (postCategory: { category: CategoryOption }) => ({
-                id: postCategory.category.id,
-                value: postCategory.category.id,
-                label: postCategory.category.name,
-                name: postCategory.category.name,
+             // 選択済みカテゴリをセット
+              const selected = post.selectedCategories.map(
+              (category: CategoryOption) => ({
+                id: category.id,
+                name: category.name,
               })
             );
-            setSelectedCategories(selected);
+            setSelectedCategories(selected); // 初期選択状態を設定
+  
           } else {
             throw new Error("Post not found");
           }
@@ -146,15 +144,15 @@ const Page: React.FC = () => {
 
   const toggleCategory = (category: CategoryOption) => {
     console.log("Selected category:", category); // デバッグ
-    if (!category.value || !category.name) {
+    if (!category.name || !category.name) {
       console.warn("無効なカテゴリが選択されました:", category);
       return;
     }
     
     setSelectedCategories((prevCategories) =>
-      prevCategories.some((c: CategoryOption) => c.value === category.value)
+      prevCategories.some((c: CategoryOption) => c.name === category.name)
         ? prevCategories.filter(
-            (c: CategoryOption) => c.value !== category.value
+            (c: CategoryOption) => c.name !== category.name
           )
         : [...prevCategories, category]
     );
@@ -177,7 +175,6 @@ const Page: React.FC = () => {
           categories={categories}
           setCategories={setCategories}
           selectedCategories={selectedCategories}
-          setSelectedCategories={setSelectedCategories}
           toggleCategory={toggleCategory}
           errors={errors}
         />

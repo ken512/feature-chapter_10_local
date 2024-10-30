@@ -1,49 +1,25 @@
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { categoriesOptions } from "@/types/categoriesOptions";
 
 const prisma = new PrismaClient();
 
-export const GET = async () => {
+  export const GET = async (req: NextRequest, { params }: { params: { id: string } }) => {
+  const { id } = params;
+
   try {
-    const categories = await prisma.category.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        _count: {
-          select: { posts: true },
-        },
+    const category = await prisma.category.findUnique({
+      where: {
+        id: parseInt(id),
       },
     });
 
-    const formattedCategories = categories.map((category) => ({
-      id: category.id,
-      name: category.name,
-      PostCategory: category._count.posts,
-    }));
-
-    // 最初のカテゴリを単一オブジェクトとして追加
-    const category = formattedCategories.length > 0 ? formattedCategories[0] : null;
-
-    // 選択済みカテゴリを設定（例としてPostCategoryが1以上のものを選択済みとする）
-    const postCategories = formattedCategories
-      .filter((category) => category.PostCategory > 0)
-      .map((category) => ({
-        category: {
-          id: category.id,
-          name: category.name,
-        },
-      }));
-
-    const post = { postCategories };
+    if (!category) {
+      return NextResponse.json({ status: 'Category not found' }, { status: 404 });
+    }
 
     return NextResponse.json(
       {
         status: "OK",
-        categories: formattedCategories,
-        categoriesOptions,
-        post,
         category,
       },
       { status: 200 }

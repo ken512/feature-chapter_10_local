@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { categoriesOptions } from "@/types/categoriesOptions";
 const prisma = new PrismaClient();
 
 export const GET = async (
@@ -71,7 +70,6 @@ export const GET = async (
           selectedCategories, // 選択済みカテゴリを含める
         },
         categories: formattedCategories,
-        categoriesOptions,
       },
       { status: 200 }
     );

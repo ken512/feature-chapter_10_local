@@ -13,7 +13,7 @@ export const GET = async (
 
   try {
 
-    const post = await prisma.post.findMany({
+    const post = await prisma.post.findUnique({
       where: {
         id: parseInt(id),
       },
