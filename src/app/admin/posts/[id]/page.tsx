@@ -43,8 +43,6 @@ const Page: React.FC = () => {
             const formattedCategories = data.categories.map(
               (category: CategoryOption) => ({
                 id: category.id,
-                value: category.id,
-                label: category.name,
                 name: category.name,
               })
             );
