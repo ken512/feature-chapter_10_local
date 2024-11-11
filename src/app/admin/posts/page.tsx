@@ -2,54 +2,36 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Post } from "@/types/Posts";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/app/_component/Header";
 import { BTN } from "@/app/_component/Button";
 import { DeleteBtn } from "@/app/admin/posts/_components/DeleteButton";
 import { CheckBox } from "@/app/admin/posts/_components/CheckBox";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { InlineDialog } from "@/app/admin/posts/_components/InlineDialog";
 import "@/app/globals.css";
 
 const ArticleListAdmin: React.FC = () => {
   const router = useRouter();
+  const { id } = useParams();
   const [posts, setPosts] = useState<Post[]>([]);
   const [checkedValues, setCheckedValues] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false); // 全選択の状態を管理
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { token } = useSupabaseSession();
 
   useEffect(() => {
-
-    if (!token) return; // tokenがない場合、APIリクエストをスキップ
-
     const fetchData = async () => {
-      try {
-        const response = await fetch("/api/admin/posts", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token, // ヘッダーにtokenを付与
-          },
-        })
-
-        if(!response.ok) throw new Error("Failed to fetch posts");
-
-        const { posts } = await response.json();
-        setPosts(posts);
-      } catch(error){
-          console.error("Error fetching posts:", error);
-      }
+      const response = await fetch("/api/admin/posts");
+      const { posts } = await response.json();
+      console.log({ posts });
+      setPosts(posts);
     };
     fetchData();
-  }, [token]);
+  }, [id]);
 
   const handleDelete = async (postId: number) => {
-
     const response = await fetch(`/api/admin/posts/${postId}`, {
       method: "DELETE",
-      headers: {Authorization: token || "", }, // DELETEリクエストにもtokenを追加
     });
-
     if (response.ok) {
       console.log("記事が削除されました");
       setShowDeleteConfirm(false);

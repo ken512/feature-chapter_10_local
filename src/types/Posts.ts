@@ -5,7 +5,7 @@ export type Post = {
   content: string
   createdAt: string
   postCategories: {category: Category}[];
-  thumbnailImageKey: string
+  thumbnailUrl: string
 }
 
 
@@ -15,5 +15,5 @@ export type MicroCmsPost = {
   content: string;
   createdAt: string;
   categories: { id: string; name: string }[]; 
-  thumbnailImageKey: { url: string; height: number; width: number };
+  thumbnailUrl: { url: string; height: number; width: number };
 }

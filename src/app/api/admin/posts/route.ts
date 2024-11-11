@@ -1,19 +1,12 @@
-import { getCurrentUser } from "@/utils/supabase";
-import { PrismaClient } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
 export const GET = async (request: NextRequest) => {
-  // リクエストのメタ情報をログに記録
-  console.log("Request method:", request.method);
-  console.log("Request URL:", request.url);
-
-  const { currentUser, error } = await getCurrentUser(request);
-
-  if (error)
-    return NextResponse.json({ status: error.message }, { status: 400 });
-
+   // リクエストのメタ情報をログに記録
+    console.log('Request method:', request.method);
+    console.log('Request URL:', request.url);
   try {
     const posts = await prisma.post.findMany({
       include: {
@@ -29,11 +22,11 @@ export const GET = async (request: NextRequest) => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
-    return NextResponse.json({ status: "OK", posts: posts }, { status: 200 });
+    return NextResponse.json({ status: 'OK', posts: posts }, { status: 200 });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ status: error.message }, { status: 400 });
@@ -44,32 +37,15 @@ export const GET = async (request: NextRequest) => {
 type CreatePostRequestBody = {
   title: string;
   content: string;
-  thumbnailImageKey: string;
+  thumbnailUrl: string;
   categories: { id: number; name: string }[];
 };
 
-export const POST = async (request: NextRequest) => {
-
-  const {currentUser, error} = await getCurrentUser(request);
-
-  if (error)
-    return NextResponse.json({ status: error.message }, { status: 400 });
-  
+export const POST = async (req: NextRequest) => {
   try {
-    const {
-      title,
-      content,
-      thumbnailImageKey,
-      categories,
-    }: CreatePostRequestBody = await request.json();
+    const { title, content, thumbnailUrl, categories }: CreatePostRequestBody = await req.json();
 
-    if (
-      !title ||
-      !content ||
-      !thumbnailImageKey ||
-      !categories ||
-      categories.length === 0
-    ) {
+    if (!title || !content || !thumbnailUrl || !categories || categories.length === 0) {
       throw new Error("Invalid input data");
     }
 
@@ -86,20 +62,16 @@ export const POST = async (request: NextRequest) => {
     });
 
     // 存在しないカテゴリIDを特定
-    const existingCategoryIds = existingCategories.map(
-      (category) => category.id
-    );
-    const nonExistingCategories = categories.filter(
-      (category) => !existingCategoryIds.includes(category.id)
-    );
+    const existingCategoryIds = existingCategories.map((category) => category.id);
+    const nonExistingCategories = categories.filter((category) => !existingCategoryIds.includes(category.id));
 
     // 存在しないカテゴリを追加
     const createdCategories = [];
     for (const category of nonExistingCategories) {
       const newCategory = await prisma.category.create({
         data: {
-          id: category.id, // フロントから渡されたIDを使用
-          name: category.name, // 名前も必要になる
+          id: category.id,  // フロントから渡されたIDを使用
+          name: category.name,  // 名前も必要になる
         },
       });
       createdCategories.push(newCategory);
@@ -113,7 +85,7 @@ export const POST = async (request: NextRequest) => {
       data: {
         title,
         content,
-        thumbnailImageKey,
+        thumbnailUrl,
       },
     });
 
@@ -125,9 +97,9 @@ export const POST = async (request: NextRequest) => {
       })),
     });
 
-    return NextResponse.json({ status: "OK", post: post }, { status: 200 });
+    return NextResponse.json({ status: 'OK', post: post }, { status: 200 });
   } catch (error) {
-    console.error("Error creating post:", error);
+    console.error('Error creating post:', error);
     if (error instanceof Error) {
       return NextResponse.json({ status: error.message }, { status: 400 });
     }

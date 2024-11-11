@@ -8,7 +8,6 @@ import { DetailsForm } from "../_components/ DetailsForm";
 import { UpdateClear } from "../../posts/_components/UpdateClearButton";
 import { UpDateDialog } from "../_components/UpDateDialog";
 import { ErrorsType } from "@/types/ErrorType";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import "@/app/globals.css";
 
 const Page: React.FC = () => {
@@ -16,7 +15,7 @@ const Page: React.FC = () => {
   const { id } = useParams();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailImageKey, setThumbnailImageUrl] = useState('')
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<
     CategoryOption[]
@@ -24,21 +23,12 @@ const Page: React.FC = () => {
   const [errors, setErrors] = useState<ErrorsType>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
-  const { token } = useSupabaseSession();
 
   useEffect(() => {
-
-    if (!token) return; // tokenがない場合、APIリクエストをスキップ
-
     if (id) {
       const fetchData = async () => {
         try {
-          const response = await fetch(`/api/admin/posts/${id}`, {
-            headers: {
-              Authorization: token, // ヘッダーにtokenを付与
-            },
-          });
-          
+          const response = await fetch(`/api/admin/posts/${id}`);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -48,11 +38,13 @@ const Page: React.FC = () => {
           if (post) {
             setTitle(post.title);
             setContent(post.content);
-            setThumbnailImageUrl(post.thumbnailImageKey);
-  
+            setThumbnailUrl(post.thumbnailUrl);
+
             const formattedCategories = data.categories.map(
               (category: CategoryOption) => ({
                 id: category.id,
+                value: category.id,
+                label: category.name,
                 name: category.name,
               })
             );
@@ -66,7 +58,7 @@ const Page: React.FC = () => {
               })
             );
             setSelectedCategories(selected); // 初期選択状態を設定
-  
+
           } else {
             throw new Error("Post not found");
           }
@@ -76,7 +68,7 @@ const Page: React.FC = () => {
       };
       fetchData();
     }
-  }, [id, token]);
+  }, [id]);
 
   const handleUpdate = async (e: FormEvent) => {
     e.preventDefault();
@@ -87,7 +79,7 @@ const Page: React.FC = () => {
   const tempErrors: ErrorsType = {};
   if (!title) tempErrors.title = "タイトルは必須です。";
   if (!content) tempErrors.content = "コンテンツは必須です。";
-  if (!thumbnailImageKey) tempErrors.thumbnailImageKey = "サムネイルURLは必須です。";
+  if (!thumbnailUrl) tempErrors.thumbnailUrl = "サムネイルURLは必須です。";
   if (selectedCategories.length === 0)
     tempErrors.categories = "カテゴリは必須です。";
   setErrors(tempErrors);
@@ -116,7 +108,7 @@ const Page: React.FC = () => {
     const submitPost = {
       title,
       content,
-      thumbnailImageKey,
+      thumbnailUrl,
       categories: upDateCategories,  // カテゴリIDリストを送信
     };
 
@@ -126,7 +118,6 @@ const Page: React.FC = () => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: token!,
       },
       body: JSON.stringify(submitPost),
     });
@@ -142,7 +133,7 @@ const Page: React.FC = () => {
   const handleClear = () => {
     setTitle("");
     setContent("");
-    setThumbnailImageUrl("");
+    setThumbnailUrl("");
     setSelectedCategories([]);
   };
 
@@ -157,7 +148,7 @@ const Page: React.FC = () => {
       console.warn("無効なカテゴリが選択されました:", category);
       return;
     }
-    
+
     setSelectedCategories((prevCategories) =>
       prevCategories.some((c: CategoryOption) => c.name === category.name)
         ? prevCategories.filter(
@@ -179,8 +170,8 @@ const Page: React.FC = () => {
           setTitle={setTitle}
           content={content}
           setContent={setContent}
-          thumbnailImageKey={thumbnailImageKey}
-          setThumbnailImageUrl={setThumbnailImageUrl}
+          thumbnailUrl={thumbnailUrl}
+          setThumbnailUrl={setThumbnailUrl}
           categories={categories}
           setCategories={setCategories}
           selectedCategories={selectedCategories}

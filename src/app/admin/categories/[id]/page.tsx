@@ -7,7 +7,6 @@ import { UpdateDelete } from "../../posts/_components/UpdateDeleteButton";
 import { UpDateDialog } from "../../posts/_components/UpDateDialog";
 import { InlineDialog } from "../../posts/_components/InlineDialog";
 import { ErrorsType } from "@/types/ErrorType";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import "@/app/globals.css";
 
 const CategoryEdit: React.FC = () => {
@@ -17,7 +16,6 @@ const CategoryEdit: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // 削除ダイアログ表示状態
   const [errors, setErrors] = useState<ErrorsType>({});
-  const { token } = useSupabaseSession();
 
   // バリデーション関数
   const validate = () => {
@@ -35,13 +33,10 @@ const CategoryEdit: React.FC = () => {
     if (!validate()) return;
 
     try {
-      if (!token) return; // tokenがない場合、APIリクエストをスキップ
-      
       const response = await fetch(`/api/admin/categories/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: token!,
         },
         body: JSON.stringify({ name }),
       });
