@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-  export const GET = async (req: NextRequest, { params }: { params: { id: string } }) => {
+  export const GET = async (request: NextRequest, { params }: { params: { id: string } }) => {
   const { id } = params;
 
   try {
+
+    
     const category = await prisma.category.findUnique({
       where: {
         id: parseInt(id),
@@ -37,12 +39,13 @@ const prisma = new PrismaClient();
   }
 };
 
-export const PUT = async(req: NextRequest, {params}: {params: {id: string}},) => {
+export const PUT = async(request: NextRequest, {params}: {params: {id: string}},) => {
   const {id} = params;
 
-  const {name} = await req.json();
-
+  const {name} = await request.json();
   try {
+
+
     const category = await prisma.category.update({
       where: {
         id: parseInt(id),
@@ -65,6 +68,7 @@ export const DELETE = async(req: NextRequest, {params}: {params: {id: string}}) 
   const {id} = params;
 
   try {
+
     // カテゴリが存在するか確認
     const category = await prisma.category.findUnique({
       where: {

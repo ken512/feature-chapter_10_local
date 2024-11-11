@@ -1,16 +1,21 @@
 "use client";
 import React, { useState, useEffect } from "react";
-// import Image from "next/image";
+import Image from "next/image";
 import { Post } from "@/types/Posts";
 import { useParams } from "next/navigation";
 import { Header } from "@/app/_component/Header";
-import "@/app/globals.css";
 import { CategoryOption } from "@/types/CategoryOption";
+import "@/app/globals.css";
+import { supabase } from "@/utils/supabase";
 
 const ArticleDetails: React.FC = () => {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [categories, setCategories] = useState<CategoryOption[]>([]); // categoriesにCategoryOption[]型を付与
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
+    null
+  );
+
   const { id } = useParams();
 
   useEffect(() => {
@@ -33,6 +38,23 @@ const ArticleDetails: React.FC = () => {
     fetchData();
   }, [id]);
 
+  // DBに保存しているthumbnailImageKeyを元に、Supabaseから画像のURLを取得する
+  useEffect(() => {
+    if (!post?.thumbnailImageKey) return;
+
+    const fetcher = async () => {
+      const {
+        data: { publicUrl },
+      } = await supabase.storage
+        .from('post_thumbnail')
+        .getPublicUrl(post.thumbnailImageKey);
+
+      setThumbnailImageUrl(publicUrl);
+    };
+
+    fetcher();
+  }, [post?.thumbnailImageKey]);
+  
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("ja-JP", {
@@ -54,9 +76,16 @@ const ArticleDetails: React.FC = () => {
       >
         <ul>
           <li key={post.id}>
-            <div className="img w-[800px] h-[400px] relative sm:w-[375px] sm:h-[200px] md:w-full md:h-auto md:flex md:justify-center overflow-hidden">
-              {/* <Image src={post.thumbnailUrl} alt="img" layout="fill" objectFit="cover" /> */}
-            </div>
+            {thumbnailImageUrl && (
+              <div className="img w-[800px] h-[400px] relative sm:w-[375px] sm:h-[200px] md:w-full md:h-auto md:flex md:justify-center overflow-hidden">
+                <Image
+                  src={thumbnailImageUrl}
+                  alt="thumbnailUrl"
+                  width={800}
+                  height={400}
+                />
+              </div>
+            )}
             <div className="pt-5 flex items-center justify-between md:space-x-10">
               <div className="text-xs border-gray-400 text-neutral-500 md:text-2xl md:mr-10">
                 {formatDate(post.createdAt)}
@@ -78,7 +107,9 @@ const ArticleDetails: React.FC = () => {
                 })}
               </div>
             </div>
-            <div className="text-[25px] mt-2 md:text-4xl md:mt-20">{post.title}</div>
+            <div className="text-[25px] mt-2 md:text-4xl md:mt-20">
+              {post.title}
+            </div>
             <div
               className="block mt-2 text-[16px] md:text-4xl md:mt-10"
               dangerouslySetInnerHTML={{ __html: post.content }}

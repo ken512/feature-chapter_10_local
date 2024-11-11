@@ -1,6 +1,6 @@
 export type ErrorsType = {
   title?: string;
   content?: string;
-  thumbnailUrl?: string;
+  thumbnailImageKey?: string;
   categories?: string;
 }

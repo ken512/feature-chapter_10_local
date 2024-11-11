@@ -1,13 +1,19 @@
 import { PrismaClient } from "@prisma/client";
+import { getCurrentUser } from "@/utils/supabase";
 import { NextRequest, NextResponse } from "next/server";
 const prisma = new PrismaClient();
 
 export const GET = async (
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const { id } = params;
+  const {currentUser, error} = await getCurrentUser(request);
 
+  if(error)
+    return NextResponse.json({status: error.message}, {status: 400});
+
+      
+  const { id } = params;
   try {
     // 記事を取得し、関連するカテゴリを含める
     const post = await prisma.post.findUnique({
@@ -83,20 +89,27 @@ type UpdatePostRequestBody = {
   title: string;
   content: string;
   categories: { id: number; name: string }[];
-  thumbnailUrl: string;
+  thumbnailImageKey: string;
 };
 
 export const PUT = async (
   request: NextRequest,
   { params }: { params: { id: string }, categories: { id: string; name: string }[] } 
 ) => {
-  const { id } = params;
+  
+  const { currentUser, error } = await getCurrentUser(request)
 
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
+
+  const { id } = params;
   // リクエストボディを取得
-  const { title, content, categories, thumbnailUrl }: UpdatePostRequestBody =
+  const { title, content, categories, thumbnailImageKey }: UpdatePostRequestBody =
     await request.json();
 
   try {
+
     // ポストのその他の情報を更新
     const post = await prisma.post.update({
       where: {
@@ -105,7 +118,7 @@ export const PUT = async (
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     });
 
@@ -149,22 +162,36 @@ for (const category of categories) {
   }
 };
 
+// DELETEという命名にすることで、DELETEリクエストの時にこの関数が呼ばれる
 export const DELETE = async (
-  req: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: { id: string } }, // ここでリクエストパラメータを受け取る
 ) => {
-  const { id } = params;
+  const { currentUser, error } = await getCurrentUser(request)
+
+    // currentUser を利用して、例えば投稿者の一致を検証するなど
+    if (!currentUser) {
+      return NextResponse.json({ status: "Unauthorized" }, { status: 403 });
+    }
+
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
+  // paramsの中にidが入っているので、それを取り出す
+  const { id } = params
 
   try {
+    // idを指定して、Postを削除
     await prisma.post.delete({
       where: {
         id: parseInt(id),
       },
-    });
+    })
 
-    return NextResponse.json({ status: "OK" }, { status: 200 });
+    // レスポンスを返す
+    return NextResponse.json({ status: 'OK' }, { status: 200 })
   } catch (error) {
     if (error instanceof Error)
-      return NextResponse.json({ status: error.message }, { status: 400 });
+      return NextResponse.json({ status: error.message }, { status: 400 })
   }
-};
+}
