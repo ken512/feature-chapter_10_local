@@ -6,6 +6,7 @@ import { ErrorsType } from "@/types/ErrorType";
 import { supabase } from "@/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 type ArticleFormProps = {
   title: string;
@@ -37,15 +38,19 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
     null
   );
+  const {token} = useSupabaseSession();
 
   // カテゴリを取得して設定
   useEffect(() => {
 
+  if(!token) return
+  
     const fetchCategories = async () => {
       try {
         const response = await fetch("/api/admin/categories", {
           headers: {
             "Content-Type": "application/json",
+            Authorization: token,
           },
         });
         if (!response.ok) {
@@ -59,7 +64,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
     };
 
     fetchCategories();
-  }, [setCategories]);
+  }, [setCategories, token]);
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) {
