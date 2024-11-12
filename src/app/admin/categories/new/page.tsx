@@ -6,6 +6,7 @@ import { CreateBtn } from "../../posts/_components/CreateButton";
 import { CreateDialog } from "@/app/admin/posts/_components/CreateDialog";
 import { CategoriesForm } from "@/app/admin/posts/_components/CategoriesForm";
 import { ErrorsType } from "@/types/ErrorType";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import "@/app/globals.css";
 
 const CategoriesPost: React.FC = () => {
@@ -13,6 +14,7 @@ const CategoriesPost: React.FC = () => {
   const [name, setName] = useState("");
   const [errors, setErrors] = useState<ErrorsType>({});
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false); // 作成ダイアログ表示状態
+  const { token } = useSupabaseSession();
 
   const validate = () => {
     const tempErrors: ErrorsType = {};
@@ -29,16 +31,19 @@ const CategoriesPost: React.FC = () => {
     setIsCreateDialogOpen(true);
 
     try {
+      
       const categoryResponse = await fetch("/api/admin/categories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token!,
         },
-        body: JSON.stringify({ name }), // postIdは送らない
+        body: JSON.stringify({ name }), 
       });
 
       const result = await categoryResponse.json();
 
+        console.log("New Categories:", categoryResponse);
       if (!categoryResponse.ok) {
         throw new Error(result.status || "カテゴリの作成に失敗しました");
       }

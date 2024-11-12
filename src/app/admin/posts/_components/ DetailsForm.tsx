@@ -9,8 +9,8 @@ type DetailsFormProps = {
   setTitle: (title: string) => void;
   content: string;
   setContent: (content: string) => void;
-  thumbnailUrl: string;
-  setThumbnailUrl: (url: string) => void;
+  thumbnailImageKey: string;
+  setThumbnailImageUrl: (url: string) => void;
   categories: CategoryOption[];
   setCategories: (categories: CategoryOption[]) => void;
   selectedCategories: CategoryOption[];
@@ -22,8 +22,8 @@ export const DetailsForm: React.FC<DetailsFormProps> = ({
   setTitle,
   content,
   setContent,
-  thumbnailUrl,
-  setThumbnailUrl,
+  thumbnailImageKey,
+  setThumbnailImageUrl,
   categories,
   setCategories,
   toggleCategory,
@@ -84,12 +84,12 @@ export const DetailsForm: React.FC<DetailsFormProps> = ({
           id="thumbnailUrl"
           type="text"
           placeholder="サムネイルURLを入力してください。"
-          value={thumbnailUrl}
-          onChange={(e) => setThumbnailUrl(e.target.value)}
+          value={thumbnailImageKey}
+          onChange={(e) => setThumbnailImageUrl(e.target.value)}
           className="w-full my-4 hover:bg-gray-300 placeholder-red-400 sm:w-full box-border"
         />
-        {errors.thumbnailUrl && (
-          <p className="text-red-500">{errors.thumbnailUrl}</p>
+        {errors.thumbnailImageKey && (
+          <p className="text-red-500">{errors.thumbnailImageKey}</p>
         )}
       </div>
       <div className="w-full py-5 sm:w-full md:text-2xl">
