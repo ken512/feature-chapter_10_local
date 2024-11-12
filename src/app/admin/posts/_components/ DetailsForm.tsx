@@ -54,7 +54,6 @@ export const DetailsForm: React.FC<DetailsFormProps> = ({
       (selectedCategory) => selectedCategory.id === category.id
     );
   };
-  
   return (
     <div className="w-3/4 mx-auto sm:w-[400px]">
       <div className="w-full py-5 sm:w-full sm:justify-self-center md:text-2xl md:w-full">

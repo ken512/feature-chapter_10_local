@@ -1,13 +1,14 @@
+
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 const prisma = new PrismaClient();
 
 export const GET = async (
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  
   const { id } = params;
+
   try {
     // 記事を取得し、関連するカテゴリを含める
     const post = await prisma.post.findUnique({
@@ -90,14 +91,13 @@ export const PUT = async (
   request: NextRequest,
   { params }: { params: { id: string }, categories: { id: string; name: string }[] } 
 ) => {
-
   const { id } = params;
+
   // リクエストボディを取得
   const { title, content, categories, thumbnailUrl }: UpdatePostRequestBody =
     await request.json();
 
   try {
-
     // ポストのその他の情報を更新
     const post = await prisma.post.update({
       where: {
@@ -150,27 +150,22 @@ for (const category of categories) {
   }
 };
 
-// DELETEという命名にすることで、DELETEリクエストの時にこの関数が呼ばれる
 export const DELETE = async (
-  request: NextRequest,
-  { params }: { params: { id: string } }, // ここでリクエストパラメータを受け取る
+  req: Request,
+  { params }: { params: { id: string } }
 ) => {
-
-  // paramsの中にidが入っているので、それを取り出す
-  const { id } = params
+  const { id } = params;
 
   try {
-    // idを指定して、Postを削除
     await prisma.post.delete({
       where: {
         id: parseInt(id),
       },
-    })
+    });
 
-    // レスポンスを返す
-    return NextResponse.json({ status: 'OK' }, { status: 200 })
+    return NextResponse.json({ status: "OK" }, { status: 200 });
   } catch (error) {
     if (error instanceof Error)
-      return NextResponse.json({ status: error.message }, { status: 400 })
+      return NextResponse.json({ status: error.message }, { status: 400 });
   }
-}
+};

@@ -39,7 +39,7 @@ const Page: React.FC = () => {
             setTitle(post.title);
             setContent(post.content);
             setThumbnailUrl(post.thumbnailUrl);
-
+  
             const formattedCategories = data.categories.map(
               (category: CategoryOption) => ({
                 id: category.id,
@@ -58,7 +58,7 @@ const Page: React.FC = () => {
               })
             );
             setSelectedCategories(selected); // 初期選択状態を設定
-
+  
           } else {
             throw new Error("Post not found");
           }
@@ -148,7 +148,7 @@ const Page: React.FC = () => {
       console.warn("無効なカテゴリが選択されました:", category);
       return;
     }
-
+    
     setSelectedCategories((prevCategories) =>
       prevCategories.some((c: CategoryOption) => c.name === category.name)
         ? prevCategories.filter(

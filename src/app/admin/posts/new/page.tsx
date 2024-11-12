@@ -23,13 +23,13 @@ const NewArticle: React.FC = () => {
     CategoryOption[]
   >([]);
 
-
+    
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
-
+  
     // エラーチェック
     const tempErrors: ErrorsType = {};
     if (!title) tempErrors.title = "タイトルは必須です。";
@@ -38,23 +38,23 @@ const NewArticle: React.FC = () => {
     if (selectedCategories.length === 0)
       tempErrors.categories = "カテゴリは必須です。";
     setErrors(tempErrors);
-
+  
     if (Object.keys(tempErrors).length > 0) {
       setIsSubmitting(false);
       return;
     }
-
+  
     // 選択されたカテゴリのみを送信
     const validCategories = selectedCategories.filter(
       (category) => category.id && category.name
     );
-
+  
     if (validCategories.length === 0) {
       console.error("有効なカテゴリがありません。");
       setIsSubmitting(false);
       return;
     }
-
+  
     try {
       const response = await fetch("/api/admin/posts", {
         method: "POST",
@@ -68,7 +68,7 @@ const NewArticle: React.FC = () => {
           categories: validCategories, // 選択されたカテゴリのみ送信
         }),
       });
-
+  
       if (response.ok) {
         console.log("記事が作成されました");
         setShowCreateConfirm(true); // 作成ダイアログを表示
@@ -82,7 +82,7 @@ const NewArticle: React.FC = () => {
 
   const toggleCategory = (category: CategoryOption) => {
     console.log("Selected category:", category); // デバッグ
-
+  
     setSelectedCategories((prevCategories) =>
       prevCategories.some((c: CategoryOption) => c.id === category.id)
         ? prevCategories.filter((c: CategoryOption) => c.id !== category.id)
