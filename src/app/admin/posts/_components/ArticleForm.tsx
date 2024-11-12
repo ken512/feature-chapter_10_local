@@ -4,7 +4,6 @@ import { Label } from "@/app/contacts/_component/Label";
 import { CategoryOption } from "@/types/CategoryOption";
 import { ErrorsType } from "@/types/ErrorType";
 import { supabase } from "@/utils/supabase";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 
@@ -38,18 +37,15 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
     null
   );
-  const { token } = useSupabaseSession();
 
   // カテゴリを取得して設定
   useEffect(() => {
-    if (!token) return;
 
     const fetchCategories = async () => {
       try {
         const response = await fetch("/api/admin/categories", {
           headers: {
             "Content-Type": "application/json",
-            Authorization: token,
           },
         });
         if (!response.ok) {
@@ -63,7 +59,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
     };
 
     fetchCategories();
-  }, [setCategories, token]);
+  }, [setCategories]);
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) {
@@ -73,11 +69,12 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
 
     const file = event.target.files[0];
 
+  
     const filePath = `private/${uuidv4()}`; // ファイルパスを指定
 
     // Supabaseのストレージに画像をアップロード
     const { data, error } = await supabase.storage
-      .from("post_thumbnail") // バケット名
+      .from('post_thumbnail') // バケット名
       .upload(filePath, file, { cacheControl: "3600", upsert: false });
 
     if (error) {
@@ -100,7 +97,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
       const {
         data: { publicUrl },
       } = await supabase.storage
-        .from("post_thumbnail")
+        .from('post_thumbnail')
         .getPublicUrl(thumbnailImageKey);
 
       setThumbnailImageUrl(publicUrl);
