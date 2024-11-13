@@ -2,8 +2,10 @@ import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
-export const GET = async () => {
+export const GET = async (request:NextResponse) => {
+  
   try {
+
     // カテゴリと関連する投稿件数を取得
     const categories = await prisma.category.findMany({
       orderBy: {
@@ -31,10 +33,12 @@ export const GET = async () => {
   }
 };
 
-export const POST = async(req: NextRequest) => {
+export const POST = async(request: NextRequest) => {
+
   
   try {
-    const body = await req.json();
+
+    const body = await request.json();
 
     const {name} = body;
     const category = await prisma.category.create({

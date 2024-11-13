@@ -8,6 +8,7 @@ import { DetailsForm } from "../_components/ DetailsForm";
 import { UpdateClear } from "../../posts/_components/UpdateClearButton";
 import { UpDateDialog } from "../_components/UpDateDialog";
 import { ErrorsType } from "@/types/ErrorType";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import "@/app/globals.css";
 
 const Page: React.FC = () => {
@@ -15,7 +16,7 @@ const Page: React.FC = () => {
   const { id } = useParams();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailImageKey, setThumbnailImageUrl] = useState('')
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<
     CategoryOption[]
@@ -23,12 +24,21 @@ const Page: React.FC = () => {
   const [errors, setErrors] = useState<ErrorsType>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const { token } = useSupabaseSession();
 
   useEffect(() => {
+
+    if (!token) return; // tokenがない場合、APIリクエストをスキップ
+
     if (id) {
       const fetchData = async () => {
         try {
-          const response = await fetch(`/api/admin/posts/${id}`);
+          const response = await fetch(`/api/admin/posts/${id}`, {
+            headers: {
+              Authorization: token, // ヘッダーにtokenを付与
+            },
+          });
+          
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -38,13 +48,11 @@ const Page: React.FC = () => {
           if (post) {
             setTitle(post.title);
             setContent(post.content);
-            setThumbnailUrl(post.thumbnailUrl);
+            setThumbnailImageUrl(post.thumbnailImageKey);
   
             const formattedCategories = data.categories.map(
               (category: CategoryOption) => ({
                 id: category.id,
-                value: category.id,
-                label: category.name,
                 name: category.name,
               })
             );
@@ -68,7 +76,7 @@ const Page: React.FC = () => {
       };
       fetchData();
     }
-  }, [id]);
+  }, [id, token]);
 
   const handleUpdate = async (e: FormEvent) => {
     e.preventDefault();
@@ -79,7 +87,7 @@ const Page: React.FC = () => {
   const tempErrors: ErrorsType = {};
   if (!title) tempErrors.title = "タイトルは必須です。";
   if (!content) tempErrors.content = "コンテンツは必須です。";
-  if (!thumbnailUrl) tempErrors.thumbnailUrl = "サムネイルURLは必須です。";
+  if (!thumbnailImageKey) tempErrors.thumbnailImageKey = "サムネイルURLは必須です。";
   if (selectedCategories.length === 0)
     tempErrors.categories = "カテゴリは必須です。";
   setErrors(tempErrors);
@@ -108,7 +116,7 @@ const Page: React.FC = () => {
     const submitPost = {
       title,
       content,
-      thumbnailUrl,
+      thumbnailImageKey,
       categories: upDateCategories,  // カテゴリIDリストを送信
     };
 
@@ -118,6 +126,7 @@ const Page: React.FC = () => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        Authorization: token!,
       },
       body: JSON.stringify(submitPost),
     });
@@ -133,7 +142,7 @@ const Page: React.FC = () => {
   const handleClear = () => {
     setTitle("");
     setContent("");
-    setThumbnailUrl("");
+    setThumbnailImageUrl("");
     setSelectedCategories([]);
   };
 
@@ -170,8 +179,8 @@ const Page: React.FC = () => {
           setTitle={setTitle}
           content={content}
           setContent={setContent}
-          thumbnailUrl={thumbnailUrl}
-          setThumbnailUrl={setThumbnailUrl}
+          thumbnailImageKey={thumbnailImageKey}
+          setThumbnailImageUrl={setThumbnailImageUrl}
           categories={categories}
           setCategories={setCategories}
           selectedCategories={selectedCategories}

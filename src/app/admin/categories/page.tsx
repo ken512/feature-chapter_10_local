@@ -7,6 +7,7 @@ import { CheckBox } from "@/app/admin/posts/_components/CheckBox";
 import { DeleteBtn } from "@/app/admin/posts/_components/DeleteButton";
 import { InlineDialog } from "@/app/admin/posts/_components/InlineDialog";
 import { CategoryOption } from "@/types/CategoryOption";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import "@/app/globals.css";
 
 const CategoryList: React.FC = () => {
@@ -14,10 +15,20 @@ const CategoryList: React.FC = () => {
   const [checkedValues, setCheckedValues] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { token } = useSupabaseSession();
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/admin/categories");
+
+      if (!token) return; // tokenがない場合、APIリクエストをスキップ
+
+      const response = await fetch("/api/admin/categories",{
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token, // ヘッダーにtokenを付与
+        },
+      });
+
       if (!response.ok) {
         throw new Error("Failed to fetch categories");
       }
@@ -31,7 +42,7 @@ const CategoryList: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []); // 依存配列が空
+  }, [token]); // 依存配列が空
 
   const handleDelete = async (categoryId: number) => {
     if (!categoryId || isNaN(categoryId)) {
@@ -40,7 +51,9 @@ const CategoryList: React.FC = () => {
     }
     const response = await fetch(`/api/admin/categories/${categoryId}`, {
       method: "DELETE",
+      headers: {Authorization: token || "", },
     });
+    
     if (response.ok) {
       console.log("カテゴリーが削除されました！");
       setShowDeleteConfirm(false);

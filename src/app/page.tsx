@@ -65,7 +65,7 @@ const PostsList: React.FC = () => {
                         rounded text-blue-600 sm:text-[9px] sm:m-[3px] sm:p-[3px] md:text-2xl"
                       >
                         {categoriesOptions.find(
-                          (option) => option.value === pc.category.id
+                          (option) => option.id === pc.category.id
                         )?.name || pc.category.name}
                       </span>
                     ))}

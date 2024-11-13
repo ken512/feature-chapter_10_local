@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, FormEvent} from "react";
+import React, { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/app/_component/Header";
 import { CategoryOption } from "@/types/CategoryOption";
@@ -8,13 +8,14 @@ import { CreateBtn } from "@/app/admin/posts/_components/CreateButton";
 import { ClearBtn } from "../_components/ClearButton";
 import { CreateDialog } from "@/app/admin/posts/_components/CreateDialog";
 import { ErrorsType } from "@/types/ErrorType";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import "@/app/globals.css";
 
 const NewArticle: React.FC = () => {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailImageKey, setThumbnailImageKey] = useState('')
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<ErrorsType>({});
@@ -22,53 +23,53 @@ const NewArticle: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<
     CategoryOption[]
   >([]);
-
-    
+  const { token } = useSupabaseSession();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
-  
+
     // エラーチェック
     const tempErrors: ErrorsType = {};
     if (!title) tempErrors.title = "タイトルは必須です。";
     if (!content) tempErrors.content = "コンテンツは必須です。";
-    if (!thumbnailUrl) tempErrors.thumbnailUrl = "サムネイルURLは必須です。";
+    if (!thumbnailImageKey) tempErrors.thumbnailImageKey = "サムネイルURLは必須です。";
     if (selectedCategories.length === 0)
       tempErrors.categories = "カテゴリは必須です。";
     setErrors(tempErrors);
-  
+
     if (Object.keys(tempErrors).length > 0) {
       setIsSubmitting(false);
       return;
     }
-  
+
     // 選択されたカテゴリのみを送信
     const validCategories = selectedCategories.filter(
       (category) => category.id && category.name
     );
-  
+
     if (validCategories.length === 0) {
       console.error("有効なカテゴリがありません。");
       setIsSubmitting(false);
       return;
     }
-  
+
     try {
       const response = await fetch("/api/admin/posts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token!,
         },
         body: JSON.stringify({
           title,
           content,
-          thumbnailUrl,
+          thumbnailImageKey,
           categories: validCategories, // 選択されたカテゴリのみ送信
         }),
       });
-  
+
       if (response.ok) {
         console.log("記事が作成されました");
         setShowCreateConfirm(true); // 作成ダイアログを表示
@@ -82,7 +83,7 @@ const NewArticle: React.FC = () => {
 
   const toggleCategory = (category: CategoryOption) => {
     console.log("Selected category:", category); // デバッグ
-  
+
     setSelectedCategories((prevCategories) =>
       prevCategories.some((c: CategoryOption) => c.id === category.id)
         ? prevCategories.filter((c: CategoryOption) => c.id !== category.id)
@@ -97,7 +98,7 @@ const NewArticle: React.FC = () => {
   const handleClear = () => {
     setTitle("");
     setContent("");
-    setThumbnailUrl("");
+    setThumbnailImageKey("");
     setSelectedCategories([]);
   };
   return (
@@ -113,8 +114,8 @@ const NewArticle: React.FC = () => {
             setTitle={setTitle}
             content={content}
             setContent={setContent}
-            thumbnailUrl={thumbnailUrl}
-            setThumbnailUrl={setThumbnailUrl}
+            thumbnailImageKey={thumbnailImageKey}
+            setThumbnailImageKey={setThumbnailImageKey}
             categories={categories}
             setCategories={setCategories}
             toggleCategory={toggleCategory}
